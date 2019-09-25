@@ -11,10 +11,17 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import android.content.SharedPreferences
+import android.graphics.Color
+import android.graphics.drawable.TransitionDrawable
+import android.graphics.drawable.ColorDrawable
+import android.graphics.drawable.Drawable
 
 class MainActivity : AppCompatActivity() {
     var temperature: Int = 68
-//    var mPrefsTempVar = getSharedPreferences("TemperNova", 0)
+    var currTemp: Int = 69
+    var transitiondrawable: Drawable? = null
+
+    //    var mPrefsTempVar = getSharedPreferences("TemperNova", 0)
     var mPrefs: SharedPreferences? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -58,6 +65,16 @@ class MainActivity : AppCompatActivity() {
     fun updateTemp(view: View) {
         val tempDisplayButton: Button = view.findViewById(R.id.tempDisplayButton)
         tempDisplayButton.text = temperature.toString() + getString(R.string.temperature_celcius_unit_string)
+        if (temperature > currTemp) {
+            val BackGroundColor = arrayOf(
+                ColorDrawable(Color.parseColor("#ff0000")),
+                ColorDrawable(Color.parseColor("#56ff00"))
+            )
+
+            transitiondrawable = TransitionDrawable(BackGroundColor)
+            transitiondrawable = resources.getDrawable(R.drawable.button_bg_transition_default_to_warm, theme)
+//            tempDisplayButton.background = transitiondrawable // broken, so disabled for now...
+        }
     }
 
     fun saveIntPref(value: Int, pref: String) {

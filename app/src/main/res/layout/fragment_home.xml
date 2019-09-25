@@ -30,14 +30,13 @@
             android:gravity="center"
             android:weightSum="1">
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/tempDisplayButton"
                 android:layout_width="1dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_weight="0.8"
-                android:background="@drawable/ic_home_circle"
-                android:color="#66FF0000"
+                android:drawableTint="@color/colorPrimaryDark"
                 android:minWidth="1dp"
                 android:minHeight="300dp"
                 android:padding="24dp"
