@@ -11,6 +11,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import android.content.SharedPreferences
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.TransitionDrawable
 import android.graphics.drawable.ColorDrawable
@@ -74,6 +75,14 @@ class MainActivity : AppCompatActivity() {
             transitiondrawable = TransitionDrawable(BackGroundColor)
             transitiondrawable = resources.getDrawable(R.drawable.button_bg_transition_default_to_warm, theme)
 //            tempDisplayButton.background = transitiondrawable // broken, so disabled for now...
+            tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorAccent))
+            tempDisplayButton.isEnabled = true
+        } else if (temperature === currTemp) {
+            tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.material_on_surface_disabled))
+            tempDisplayButton.isEnabled = false
+        } else {
+            tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorTempCooling))
+            tempDisplayButton.isEnabled = true
         }
     }
 
