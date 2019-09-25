@@ -14,7 +14,7 @@ import android.content.SharedPreferences
 
 class MainActivity : AppCompatActivity() {
     var temperature: Int = 68
-    var mPrefsTempVar = getSharedPreferences("TemperNova", 0)
+//    var mPrefsTempVar = getSharedPreferences("TemperNova", 0)
     var mPrefs: SharedPreferences? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -29,8 +29,8 @@ class MainActivity : AppCompatActivity() {
                 R.id.navigation_home, R.id.navigation_dashboard, R.id.navigation_notifications))
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
-        mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
-        temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
+//        mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
+//        temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
     }
 
     fun readIntegerSharedPrefs(default: Int, key: String): Int {
