@@ -32,18 +32,19 @@
 
             <Button
                 android:id="@+id/tempDisplayButton"
+                android:layout_width="1dp"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center"
+                android:layout_weight="0.8"
                 android:background="@drawable/ic_home_circle"
                 android:color="#66FF0000"
-                android:minWidth="150dp"
-                android:minHeight="210dp"
+                android:minWidth="1dp"
+                android:minHeight="300dp"
                 android:padding="24dp"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.8"
-                android:textColor="@android:color/white"
                 android:text="68° C"
-                android:textSize="36dp"/>
+                android:textColor="@android:color/white"
+                android:textSize="36dp"
+                app:cornerRadius="600dp" />
         </LinearLayout>
 
         <LinearLayout
