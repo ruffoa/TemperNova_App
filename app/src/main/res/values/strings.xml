@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">TemperNova</string>
     <string name="title_home">Home</string>
-    <string name="title_dashboard">Dashboard</string>
+    <string name="title_maps">Map</string>
     <string name="title_notifications">Notifications</string>
     <string name="temperature_celcius_unit_string">° C</string>
     <string name="temperature_preference_key">savedTemperaturePreferenceKey</string>
