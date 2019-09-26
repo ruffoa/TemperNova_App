@@ -1,6 +1,5 @@
 package com.example.tempernova
 
-import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -16,11 +15,13 @@ import android.graphics.Color
 import android.graphics.drawable.TransitionDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import com.example.tempernova.helpers.RepeatListener
 
 class MainActivity : AppCompatActivity() {
     var temperature: Int = 68
     var currTemp: Int = 69
     var transitiondrawable: Drawable? = null
+    private var isTempDownHeld = false;
 
     //    var mPrefsTempVar = getSharedPreferences("TemperNova", 0)
     var mPrefs: SharedPreferences? = null
@@ -56,11 +57,21 @@ class MainActivity : AppCompatActivity() {
             updateTemp(view)
         }
 
+        tempUpButton.setOnTouchListener(RepeatListener(400, 100, {
+            temperature++
+            updateTemp(view)
+        }))
+
         /** Called when the user touches the "-" button */
         tempDownButton.setOnClickListener {
             temperature--
             updateTemp(view)
         }
+
+        tempDownButton.setOnTouchListener(RepeatListener(400, 100, {
+            temperature--
+            updateTemp(view)
+        }))
     }
 
     fun updateTemp(view: View) {
