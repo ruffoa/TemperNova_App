@@ -1,0 +1,19 @@
+<resources>
+    <!--
+    TODO: Before you run your application, you need a Google Maps API key.
+
+    To get one, follow this link, follow the directions and press "Create" at the end:
+
+    SHA-1 certificate fingerprint:
+    Android Application (<cert_fingerprint>;<package_name>): DE:D4:55:C0:89:66:23:8C:8B:D7:E4:20:35:95:43:9D:14:B3:6C:D4;com.example.tempernova
+
+    Alternatively, follow the directions here:
+    https://developers.google.com/maps/documentation/android/start#get-key
+
+    Once you have your key (it starts with "AIza"), replace the "google_maps_key"
+    string in this file.
+    -->
+    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">
+        AIzaSyD0WdjHHncsLjYJqu_PvKdxHECEs0FBzE0
+    </string>
+</resources>
