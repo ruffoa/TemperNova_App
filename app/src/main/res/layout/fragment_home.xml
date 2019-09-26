@@ -76,7 +76,7 @@
                 android:layout_marginLeft="40dp"
                 android:padding="8dp"
                 android:textColor="@android:color/white"
-                android:backgroundTint="@color/colorAccent"
+                android:backgroundTint="@color/colorPrimaryDark"
                 android:text="+"
                 android:textSize="36dp"/>
         </LinearLayout>
