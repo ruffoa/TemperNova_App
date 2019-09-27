@@ -31,6 +31,18 @@ class HomeFragment : Fragment() {
         (activity as MainActivity).bindButtonFunctions(root)
         (activity as MainActivity).updateTemp(root)
 
+        checkBluetooth()
+        displayWarningBanner()
         return root
+    }
+
+    fun checkBluetooth() {
+        if (!(activity as MainActivity).hasBluetooth) {
+            displayWarningBanner(getString(R.string.bluetooth_unavailable))
+        }
+    }
+
+    fun displayWarningBanner(msg: String) {
+
     }
 }

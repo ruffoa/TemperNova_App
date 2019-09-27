@@ -1,5 +1,6 @@
 package com.example.tempernova
 
+import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.os.Bundle
 import android.view.View
@@ -17,12 +18,16 @@ import android.graphics.drawable.TransitionDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import com.example.tempernova.helpers.RepeatListener
+import com.example.tempernova.helpers.Bluetooth
 
 class MainActivity : AppCompatActivity() {
     var temperature: Int = 68
     var currTemp: Int = 69
     var transitiondrawable: Drawable? = null
     var mPrefs: SharedPreferences? = null
+    lateinit var bluetoothAdapter: BluetoothAdapter
+    var bluetoothClass: Bluetooth = Bluetooth()
+    var hasBluetooth: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +44,7 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
         mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
         temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
+        hasBluetooth = bluetoothClass.checkBluetooth(this.applicationContext)
     }
 
     override fun onPause() {
@@ -110,4 +116,6 @@ class MainActivity : AppCompatActivity() {
             commit()
         }
     }
+
+
 }
