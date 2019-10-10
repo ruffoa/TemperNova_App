@@ -35,6 +35,7 @@ class HomeFragment : Fragment() {
 
         (activity as MainActivity).bindButtonFunctions(root)
         (activity as MainActivity).updateTemp(root)
+        (activity as MainActivity).checkAndUpdateBluetoothStatus()
 
         checkBluetooth(root)
 
@@ -49,6 +50,10 @@ class HomeFragment : Fragment() {
             displayWarningBanner(view, getString(R.string.bluetooth_unavailable), getString(R.string.bluetooth_unavailable_action))
         } else if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.OFF) {
             displayWarningBanner(view, getString(R.string.bluetooth_off), getString(R.string.bluetooth_off_action))
+        } else {
+            if (::banner.isInitialized) {
+                banner.dismiss()
+            }
         }
     }
 

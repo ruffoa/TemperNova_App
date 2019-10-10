@@ -117,5 +117,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun checkAndUpdateBluetoothStatus() {
+        bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
+    }
 
 }
