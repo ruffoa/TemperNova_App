@@ -1,6 +1,9 @@
 package com.example.tempernova
 
+import android.app.Activity
+import android.bluetooth.BluetoothAdapter
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Button
@@ -16,13 +19,20 @@ import android.graphics.Color
 import android.graphics.drawable.TransitionDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import android.webkit.WebViewFragment
+import androidx.navigation.fragment.NavHostFragment
 import com.example.tempernova.helpers.RepeatListener
+import com.example.tempernova.helpers.Bluetooth
+import com.example.tempernova.ui.home.HomeFragment
 
 class MainActivity : AppCompatActivity() {
     var temperature: Int = 68
     var currTemp: Int = 69
     var transitiondrawable: Drawable? = null
     var mPrefs: SharedPreferences? = null
+    lateinit var bluetoothAdapter: BluetoothAdapter
+    var bluetoothClass: Bluetooth = Bluetooth()
+    var bluetoothStatus: Bluetooth.BluetoothStates = Bluetooth.BluetoothStates.UNAVAILABLE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
         mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
         temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
+        bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
     }
 
     override fun onPause() {
@@ -108,6 +119,22 @@ class MainActivity : AppCompatActivity() {
         with(mPrefs!!.edit()) {
             putInt(pref, value)
             commit()
+        }
+    }
+
+    fun checkAndUpdateBluetoothStatus() {
+        bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        val navHostFragment = supportFragmentManager.fragments.first() as? NavHostFragment
+        if(navHostFragment != null) {
+            val childFragments = navHostFragment.childFragmentManager.fragments
+            childFragments.forEach { fragment ->
+                fragment.onActivityResult(requestCode, resultCode, data)
+            }
         }
     }
 }
