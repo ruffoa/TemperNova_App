@@ -1,5 +1,7 @@
 package com.example.tempernova.ui.home
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -13,6 +15,7 @@ import com.example.tempernova.R
 import com.example.tempernova.components.BannerComponent
 import com.example.tempernova.helpers.Bluetooth
 import com.sergivonavi.materialbanner.Banner
+import com.sergivonavi.materialbanner.BannerInterface
 
 class HomeFragment : Fragment() {
 
@@ -42,7 +45,7 @@ class HomeFragment : Fragment() {
         return root
     }
 
-    private fun checkBluetooth(view: View) {
+    fun checkBluetooth(view: View) {
         print("Device has bluetooth: ")
         println((activity as MainActivity).bluetoothStatus)
 
@@ -58,9 +61,27 @@ class HomeFragment : Fragment() {
     }
 
     private fun displayWarningBanner(view: View, msg: String, actionMsg: String) {
-        banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, actionMsg, R.drawable.ic_bluetooth_disabled_black_24dp, null)
+        banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, actionMsg, R.drawable.ic_bluetooth_disabled_black_24dp, BannerInterface.OnClickListener {
+            (activity as MainActivity).bluetoothClass.enableBluetooth(this.activity!!)
+
+            if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.ON) {
+                it.dismiss()
+            }
+        })
                 println(banner)
 
         banner.show()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (resultCode === Activity.RESULT_OK && requestCode === resources.getInteger(R.integer.bluetooth_request_code)) {
+            println("RESULT OK!")
+
+            (activity as MainActivity).bluetoothStatus = Bluetooth.BluetoothStates.ON
+            checkBluetooth(this.view!!)
+        }
+
     }
 }

@@ -1,9 +1,13 @@
 package com.example.tempernova.helpers
 
+import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothHeadset
 import android.bluetooth.BluetoothProfile
 import android.content.Context
+import android.content.Intent
+import androidx.core.app.ActivityCompat.startActivityForResult
+import com.example.tempernova.R
 
 class Bluetooth {
     var bluetoothHeadset: BluetoothHeadset? = null
@@ -51,4 +55,12 @@ class Bluetooth {
 
         return BluetoothStates.ON
     }
+
+    fun enableBluetooth(activity: Activity) {
+        if (bluetoothAdapter?.isEnabled == false) {
+            val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+            startActivityForResult(activity, enableBtIntent, activity.resources.getInteger(R.integer.bluetooth_request_code), null)
+        }
+    }
+
 }

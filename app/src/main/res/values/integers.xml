@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <integer name="default_celcius_temperature">75</integer>
+    <integer name="bluetooth_request_code">111</integer>
 </resources>
