@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
     var mPrefs: SharedPreferences? = null
     lateinit var bluetoothAdapter: BluetoothAdapter
     var bluetoothClass: Bluetooth = Bluetooth()
-    var hasBluetooth: Boolean = false
+    var bluetoothStatus: Bluetooth.BluetoothStates = Bluetooth.BluetoothStates.UNAVAILABLE
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
         navView.setupWithNavController(navController)
         mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
         temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
-        hasBluetooth = bluetoothClass.checkBluetooth(this.applicationContext)
+        bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
     }
 
     override fun onPause() {

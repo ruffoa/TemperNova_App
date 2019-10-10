@@ -10,6 +10,10 @@ class Bluetooth {
     // Get the default adapter
     val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()
 
+    enum class BluetoothStates {
+        UNAVAILABLE, OFF, ON, CONNECTED
+    }
+
     private val profileListener = object : BluetoothProfile.ServiceListener {
 
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
@@ -25,11 +29,16 @@ class Bluetooth {
         }
     }
 
-    fun checkBluetooth(context: Context): Boolean {
+    fun checkBluetooth(context: Context): BluetoothStates {
         if (bluetoothAdapter == null) {
             // Device doesn't support Bluetooth
-            System.out.println("Bluetooth is not detected!")
-            return false
+            println("Bluetooth is not detected!")
+            return BluetoothStates.UNAVAILABLE
+        }
+
+        if (!bluetoothAdapter.isEnabled) {
+            println("Bluetooth is turned off :(")
+            return BluetoothStates.OFF
         }
 
         // Establish connection to the proxy.
@@ -40,6 +49,6 @@ class Bluetooth {
         // Close proxy connection after use.
         bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HEADSET, bluetoothHeadset)
 
-        return true
+        return BluetoothStates.ON
     }
 }
