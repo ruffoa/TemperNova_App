@@ -16,7 +16,7 @@ import com.example.tempernova.R
 class NotificationsFragment : Fragment() {
 
     private lateinit var notificationsViewModel: NotificationsViewModel
-    lateinit private var staggeredLayoutManager: StaggeredGridLayoutManager
+
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -31,8 +31,7 @@ class NotificationsFragment : Fragment() {
             textView.text = it
         })
 
-        staggeredLayoutManager = StaggeredGridLayoutManager(1, StaggeredGridLayoutManager.VERTICAL)
-//        list.layoutManager = staggeredLayoutManager
+
 
         return root
     }
