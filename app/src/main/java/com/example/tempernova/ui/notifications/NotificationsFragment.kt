@@ -8,11 +8,14 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import kotlinx.android.synthetic.main.activity_main.*
+
 import com.example.tempernova.R
 
 class NotificationsFragment : Fragment() {
 
     private lateinit var notificationsViewModel: NotificationsViewModel
+    lateinit private var staggeredLayoutManager: StaggeredGridLayoutManager
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -26,6 +29,10 @@ class NotificationsFragment : Fragment() {
         notificationsViewModel.text.observe(this, Observer {
             textView.text = it
         })
+
+        staggeredLayoutManager = StaggeredGridLayoutManager(1, StaggeredGridLayoutManager.VERTICAL)
+        list.layoutManager = staggeredLayoutManager
+
         return root
     }
 }

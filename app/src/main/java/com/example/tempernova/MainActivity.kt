@@ -33,6 +33,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var bluetoothAdapter: BluetoothAdapter
     var bluetoothClass: Bluetooth = Bluetooth()
     var bluetoothStatus: Bluetooth.BluetoothStates = Bluetooth.BluetoothStates.UNAVAILABLE
+    private lateinit var cardListAdapter: TravelListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
