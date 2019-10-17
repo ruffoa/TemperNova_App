@@ -8,6 +8,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import kotlinx.android.synthetic.main.activity_main.*
 
 import com.example.tempernova.R
@@ -31,7 +32,7 @@ class NotificationsFragment : Fragment() {
         })
 
         staggeredLayoutManager = StaggeredGridLayoutManager(1, StaggeredGridLayoutManager.VERTICAL)
-        list.layoutManager = staggeredLayoutManager
+//        list.layoutManager = staggeredLayoutManager
 
         return root
     }

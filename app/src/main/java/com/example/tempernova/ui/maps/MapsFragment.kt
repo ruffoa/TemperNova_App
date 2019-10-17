@@ -23,11 +23,14 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
 import androidx.core.app.ActivityCompat
+import com.example.tempernova.MainActivity
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Task
+import java.text.SimpleDateFormat
+import java.util.*
 
 class MapsFragment : Fragment(), OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener {
@@ -131,6 +134,11 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleApiClient.ConnectionC
                 val res: Location? = task.result
 
                 gMap!!.moveCamera(CameraUpdateFactory.newLatLngZoom(LatLng(res!!.latitude, res!!.longitude), 18f))
+                (activity as MainActivity).saveFloatPref(res!!.latitude.toFloat(), getString(R.string.latitude_preference_key))
+                (activity as MainActivity).saveFloatPref(res!!.longitude.toFloat(), getString(R.string.longitude_preference_key))
+                val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
+                val currentDate = sdf.format(Date())
+                (activity as MainActivity).saveStringPref(currentDate, getString(R.string.date_preference_key))
             } else {
                 Log.w(TAG, "getLastLocation:exception", task.exception)
             }

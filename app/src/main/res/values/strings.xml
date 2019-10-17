@@ -6,6 +6,10 @@
     <string name="temperature_celcius_unit_string">° C</string>
     <string name="temperature_preference_key">savedTemperaturePreferenceKey</string>
     <string name="shared_preferences_name">TemperNovaPrefs</string>
+    <string name="latitude_preference_key">savedLatitudePreferenceKey</string>
+    <string name="longitude_preference_key">savedLongitudePreferenceKey</string>
+    <string name="date_preference_key">savedDatePreferenceKey</string>
+
 
     <!--  Bluetooth Banner Messages  -->
     <string name="bluetooth_unavailable">Bluetooth is currently unavailable. Try turning on Bluetooth if your device supports it.</string>

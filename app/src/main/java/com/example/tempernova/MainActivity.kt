@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var bluetoothAdapter: BluetoothAdapter
     var bluetoothClass: Bluetooth = Bluetooth()
     var bluetoothStatus: Bluetooth.BluetoothStates = Bluetooth.BluetoothStates.UNAVAILABLE
-    private lateinit var cardListAdapter: TravelListAdapter
+//    private lateinit var cardListAdapter: TravelListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +65,14 @@ class MainActivity : AppCompatActivity() {
 
     fun readIntegerSharedPrefs(default: Int, key: String): Int {
         return mPrefs?.getInt(key, default) ?: 0
+    }
+
+    fun readFloatSharedPrefs(default: Float, key: String): Float {
+        return mPrefs?.getFloat(key, default) ?: 0f
+    }
+
+    fun readStringSharedPrefs(default: String, key: String): String {
+        return mPrefs?.getString(key, default) ?: "emptyString"
     }
 
     fun bindButtonFunctions(view: View) {
@@ -119,6 +127,20 @@ class MainActivity : AppCompatActivity() {
     fun saveIntPref(value: Int, pref: String) {
         with(mPrefs!!.edit()) {
             putInt(pref, value)
+            commit()
+        }
+    }
+
+    fun saveFloatPref(value: Float, pref: String) {
+        with(mPrefs!!.edit()) {
+            putFloat(pref, value)
+            commit()
+        }
+    }
+
+    fun saveStringPref(value: String, pref: String) {
+        with(mPrefs!!.edit()) {
+            putString(pref, value)
             commit()
         }
     }
