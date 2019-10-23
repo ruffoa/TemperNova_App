@@ -83,5 +83,12 @@ class HomeFragment : Fragment() {
             checkBluetooth(this.view!!)
         }
 
+        if (requestCode == (activity as MainActivity).locationHelper.REQUEST_CHECK_SETTINGS) {
+            if (resultCode == Activity.RESULT_OK) {
+                (activity as MainActivity).locationHelper.updateStateAndStartLocationUpdates(this.activity!!)
+            }
+        }
+
+
     }
 }

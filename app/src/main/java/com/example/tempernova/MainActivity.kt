@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.tempernova.adapters.CardListAdapter
 import com.example.tempernova.helpers.RepeatListener
 import com.example.tempernova.helpers.Bluetooth
+import com.example.tempernova.helpers.LocationHelper
 import com.example.tempernova.ui.home.HomeFragment
 
 class MainActivity : AppCompatActivity() {
@@ -37,6 +38,8 @@ class MainActivity : AppCompatActivity() {
     lateinit var bluetoothAdapter: BluetoothAdapter
     var bluetoothClass: Bluetooth = Bluetooth()
     var bluetoothStatus: Bluetooth.BluetoothStates = Bluetooth.BluetoothStates.UNAVAILABLE
+    lateinit var locationHelper: LocationHelper
+
 //    private lateinit var cardListAdapter: TravelListAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
