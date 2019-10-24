@@ -19,18 +19,14 @@ import android.graphics.Color
 import android.graphics.drawable.TransitionDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
-import android.webkit.WebViewFragment
 import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.example.tempernova.adapters.CardListAdapter
+//import com.example.tempernova.adapters.CardListAdapter
 import com.example.tempernova.helpers.RepeatListener
 import com.example.tempernova.helpers.Bluetooth
 import com.example.tempernova.helpers.LocationHelper
-import com.example.tempernova.ui.home.HomeFragment
 
 class MainActivity : AppCompatActivity() {
-    lateinit private var staggeredLayoutManager: StaggeredGridLayoutManager
-    lateinit private var adapter: CardListAdapter
     var temperature: Int = 68
     var currTemp: Int = 69
     var transitiondrawable: Drawable? = null
@@ -58,22 +54,38 @@ class MainActivity : AppCompatActivity() {
         mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
         temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
         bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
-        staggeredLayoutManager = StaggeredGridLayoutManager(1, StaggeredGridLayoutManager.VERTICAL)
-        list.layoutManager = staggeredLayoutManager
 
-        adapter = CardListAdapter(this)
-        list.adapter = adapter
+        if (!::locationHelper.isInitialized) {
+            locationHelper = LocationHelper()
+            locationHelper.setUpLocationUpdates(this)
+            locationHelper.setUpPlacesApi(this)
+            locationHelper.updateStateAndStartLocationUpdates(this)
+        }
     }
 
     override fun onPause() {
         super.onPause()
         saveIntPref(temperature, getString(R.string.temperature_preference_key))
+
+        if (::locationHelper.isInitialized)
+            locationHelper.storeLocationList(this)
     }
 
     override fun onStop() {
         super.onStop()
         saveIntPref(temperature, getString(R.string.temperature_preference_key))
+
+        if (::locationHelper.isInitialized)
+            locationHelper.storeLocationList(this)
     }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (::locationHelper.isInitialized)
+            locationHelper.readLocationListFromPref(this)
+    }
+
 
     fun readIntegerSharedPrefs(default: Int, key: String): Int {
         return mPrefs?.getInt(key, default) ?: 0

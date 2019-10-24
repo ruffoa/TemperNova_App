@@ -85,10 +85,9 @@ class HomeFragment : Fragment() {
 
         if (requestCode == (activity as MainActivity).locationHelper.REQUEST_CHECK_SETTINGS) {
             if (resultCode == Activity.RESULT_OK) {
+                (activity as MainActivity).locationHelper.setUpLocationUpdates(this.activity!!)
                 (activity as MainActivity).locationHelper.updateStateAndStartLocationUpdates(this.activity!!)
             }
         }
-
-
     }
 }

@@ -4,6 +4,9 @@ import android.app.Activity
 import android.content.ContentValues
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.location.Address
+import android.location.Geocoder
 import android.location.Location
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -11,48 +14,56 @@ import com.example.tempernova.MainActivity
 import com.example.tempernova.R
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.Task
-import java.text.SimpleDateFormat
+import java.io.IOException
 import java.util.*
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
+import com.google.android.libraries.places.api.model.Place
 
 class LocationHelper {
-    class LocationData(latLng: LatLng) {
-        var latitude: Double = latLng.latitude
-        var longitude: Double = latLng.longitude
-        var time: Date = Date()
+    class LocationData(latLng: LatLng, address: Address?, isConnected: Boolean? = false, bitmap: Bitmap? = null) {
+        val latitude: Double = latLng.latitude
+        val longitude: Double = latLng.longitude
+        val time: Date = Date()
+        val address: String = address!!.getAddressLine(0)
+        val isConnected = isConnected!!
+        val bitmap: Bitmap? = bitmap
     }
 
     lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
-    // 2
+
     private lateinit var locationRequest: LocationRequest
+    private lateinit var placesClient: PlacesClient
+
     private var locationUpdateState = false
 
     private val REQUEST_LOCATION_PERMISSIONS = 1
-    public val REQUEST_CHECK_SETTINGS = 2
+    val REQUEST_CHECK_SETTINGS = 2
+    val LOCATION_LIST_MAX_SIZE = 15
+    val gson = Gson()
 
     private var locationList: MutableList<LocationData> = mutableListOf()
 
     public fun setFusedLocationProviderCLient(activity: Activity) {
-        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(activity!!)
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(activity)
     }
 
     public fun getFusedLocationProviderClient(): FusedLocationProviderClient {
         return this.mFusedLocationProviderClient
     }
 
-    fun getLastLocation(activity: Activity) {
-        mFusedLocationProviderClient.lastLocation.addOnCompleteListener(activity!!) { task: Task<Location> ->
+    fun setFusedLocationProviderListner(activity: Activity) {
+        mFusedLocationProviderClient.lastLocation.addOnCompleteListener(activity) { task: Task<Location> ->
             if (task.isSuccessful && task.result != null) {
                 val res: Location? = task.result
 
-                (activity as MainActivity).saveFloatPref(res!!.latitude.toFloat(), activity.getString(R.string.latitude_preference_key))
-                (activity as MainActivity).saveFloatPref(res!!.longitude.toFloat(), activity.getString(R.string.longitude_preference_key))
-                val sdf = SimpleDateFormat("dd/M/yyyy hh:mm:ss")
-                val currentDate = sdf.format(Date())
-                (activity as MainActivity).saveStringPref(currentDate, activity.getString(R.string.date_preference_key))
+                addPlaceToList(activity, res!!)
             } else {
                 Log.w(ContentValues.TAG, "getLastLocation:exception", task.exception)
             }
@@ -72,29 +83,28 @@ class LocationHelper {
         mFusedLocationProviderClient.requestLocationUpdates(locationRequest, locationCallback, null /* Looper */)
     }
 
-    fun createLocationRequest(activity: Activity) {
-        // 1
+    private fun createLocationRequest(activity: Activity) {
+
         locationRequest = LocationRequest()
-        // 2
-        locationRequest.interval = 10000
-        // 3
-        locationRequest.fastestInterval = 5000
+
+        locationRequest.interval = 300000    // in ms, so it is set to 5 minutes - will ask for updated location every 5 minutes
+
+        locationRequest.fastestInterval = 5000  // set to 5 seconds - will accept location updates up to every 5 seconds!
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
 
         val builder = LocationSettingsRequest.Builder()
             .addLocationRequest(locationRequest)
 
-        // 4
+
         val client = LocationServices.getSettingsClient(activity)
         val task = client.checkLocationSettings(builder.build())
 
-        // 5
         task.addOnSuccessListener {
             locationUpdateState = true
             startLocationUpdates(activity)
         }
         task.addOnFailureListener { e ->
-            // 6
+
             if (e is ResolvableApiException) {
                 // Location settings are not satisfied, but this can be fixed
                 // by showing the user a dialog.
@@ -110,21 +120,122 @@ class LocationHelper {
         }
     }
 
-    public fun setUpLocationUpdates(activity: Activity) {
-        createLocationRequest(activity)
+    private fun getAddressFromLatLng(activity: Activity, latLng: LatLng): Address? {
+        // 1
+        val geocoder = Geocoder(activity)
+        val addresses: List<Address>?
+
+        try {
+            // 2
+            addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1)
+            // 3
+            if (null != addresses && !addresses.isEmpty()) {
+                return addresses[0]
+            }
+        } catch (e: IOException) {
+            Log.e("MapsActivity", e.localizedMessage)
+        }
+
+        return null
     }
 
-    public fun updateStateAndStartLocationUpdates(activity: Activity){
+    private fun getLocationPicture(place: Location) {
+//        val fields = ArrayList()
+//        fields.add(Place.Field.LAT_LNG)
+//        fields.add(Place.Field.ADDRESS)
+//        val currentPlaceRequest = FindCurrentPlaceRequest.newInstance(fields)
+//
+//        currentPlaceTask = placesClient.findCurrentPlace(currentPlaceRequest)
+//
+    }
+
+    private fun addPlaceToList(activity: Activity, place: Location) {
+        val latLng = LatLng(place.latitude, place.longitude)
+        val address = getAddressFromLatLng(activity, latLng)
+
+        val lastLocation = if (locationList.size > 0) locationList.last() else null
+        val locationBitmap = getLocationPicture(place)
+
+        Log.d("TAG", "trying to add to list!")
+        Log.d("TAG", "Address is " + address?.getAddressLine(0))
+
+        if (address === null || address.getAddressLine(0) == "") {
+            return
+        }
+
+        if (lastLocation !== null && lastLocation.latitude != place.latitude || lastLocation !== null && lastLocation.longitude != place.longitude) { // don't just continuously add the last place!
+            locationList.add(LocationData(latLng, address))
+            if (locationList.size > LOCATION_LIST_MAX_SIZE) {
+                locationList = locationList.drop(locationList.size - LOCATION_LIST_MAX_SIZE).toMutableList()   // remove the first n elements from the list where n is the number of elements more than the set max we want to store.
+            }
+        } else {    // same location, so let's just update the time we saved!
+            locationList = locationList.dropLast(1).toMutableList()
+            locationList.add(LocationData(latLng, address))
+        }
+    }
+
+    fun setUpPlacesApi(activity: Activity) {
+        Places.initialize(activity, activity.getString(R.string.google_maps_key))
+    }
+
+    fun setUpLocationUpdates(activity: Activity) {  // public fun by default :)
+        mFusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(activity)
+
+        if (mFusedLocationProviderClient !== null) {
+            createLocationRequest(activity)
+            setFusedLocationProviderListner(activity)
+        }
+    }
+
+    fun updateStateAndStartLocationUpdates(activity: Activity){
         locationUpdateState = true
 
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult) {
                 super.onLocationResult(p0)
-                val lastLocation = p0.lastLocation
 
-                  locationList.add(LocationData(LatLng(lastLocation.latitude, lastLocation.longitude)))
+                val lastLocation = p0.lastLocation
+                addPlaceToList(activity, lastLocation!!)
             }
         }
+
         startLocationUpdates(activity)
+    }
+
+    fun storeLocationList(activity: Activity) {
+        if (activity !== null) {
+            val json = gson.toJson(locationList)
+
+            (activity as MainActivity).saveStringPref(json, activity.getString(R.string.location_list_preference_key))
+        }
+    }
+
+    inline fun <reified T> Gson.fromJson(json: String) = this.fromJson<T>(json, object: TypeToken<T>() {}.type)
+
+    fun parseJsonList(json: String) {
+
+    }
+
+    fun readLocationListFromPref(activity: Activity) {
+        if (activity !== null) {
+            Log.d("TAG", "Reading location list from preferences! ")
+
+            val jsonString = (activity as MainActivity).readStringSharedPrefs("", activity.getString(R.string.location_list_preference_key))
+            if (jsonString !== "") {
+                var locationListObject: MutableList<LocationData> = Gson().fromJson(jsonString)
+                locationListObject = locationListObject.filter { l: LocationData -> l.address !== null }
+                    .toMutableList()
+
+                Log.d("TAG", "Parsed Location list is -> " + locationListObject.size)
+
+                if (locationListObject !== null && locationListObject.size > 0) // check to make sure that the reading worked and we have some data in the object before overwriting the valid default / current data!
+                    locationList = locationListObject
+            }
+        }
+    }
+
+    fun getLocationList(): MutableList<LocationData> {
+                Log.d("TAG", "Location list length is " + locationList.size)
+        return locationList
     }
 }

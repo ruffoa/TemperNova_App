@@ -1,7 +1,9 @@
 package com.example.tempernova.ui.maps
 
 import android.Manifest
+import android.app.Activity
 import android.content.ContentValues.TAG
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Bundle
@@ -17,18 +19,20 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.example.tempernova.R
+import androidx.core.app.ActivityCompat
+import com.example.tempernova.MainActivity
+
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
-import androidx.core.app.ActivityCompat
-import com.example.tempernova.MainActivity
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.api.GoogleApiClient
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Task
+
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -120,7 +124,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleApiClient.ConnectionC
         }
     }
 
-    fun requestLocationPermissions() {
+    private fun requestLocationPermissions() {
         ActivityCompat.requestPermissions(
             this.activity!!,
             arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
@@ -128,7 +132,7 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleApiClient.ConnectionC
         )
     }
 
-    fun setLocation() {
+    private fun setLocation() {
         mFusedLocationProviderClient.lastLocation.addOnCompleteListener(this.activity!!) { task: Task<Location> ->
             if (task.isSuccessful && task.result != null) {
                 val res: Location? = task.result
@@ -150,4 +154,15 @@ class MapsFragment : Fragment(), OnMapReadyCallback, GoogleApiClient.ConnectionC
     override fun onConnectionSuspended(i: Int) {}
 
     override fun onConnectionFailed(@NonNull connectionResult: ConnectionResult) {}
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == (activity as MainActivity).locationHelper.REQUEST_CHECK_SETTINGS) {
+            if (resultCode == Activity.RESULT_OK) {
+                (activity as MainActivity).locationHelper.setUpLocationUpdates(this.activity!!)
+                (activity as MainActivity).locationHelper.updateStateAndStartLocationUpdates(this.activity!!)
+            }
+        }
+    }
 }
