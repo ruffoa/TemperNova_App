@@ -36,8 +36,6 @@ class MainActivity : AppCompatActivity() {
     var bluetoothStatus: Bluetooth.BluetoothStates = Bluetooth.BluetoothStates.UNAVAILABLE
     lateinit var locationHelper: LocationHelper
 
-//    private lateinit var cardListAdapter: TravelListAdapter
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
