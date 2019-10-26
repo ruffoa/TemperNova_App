@@ -36,7 +36,6 @@ class CardListAdapter(private var context: Context, private var data: MutableLis
         Log.d("TAG", "Address is " + event.address + " size is " + data.size)
 
         holder.itemView.cardImage.setImageDrawable(this.context.getDrawable(R.drawable.ic_sync_disabled_black_24dp))
-//        Picasso.with(context).load(place.getImageResourceId(context)).into(holder.itemView.placeImage)
     }
 
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView), View.OnClickListener {

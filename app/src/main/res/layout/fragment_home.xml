@@ -46,7 +46,7 @@
                 android:layout_weight="0.8"
                 android:drawableTint="@color/colorPrimaryDark"
                 android:minWidth="1dp"
-                android:minHeight="300dp"
+                android:minHeight="310dp"
                 android:padding="24dp"
                 android:text="68° C"
                 android:textColor="@android:color/white"

@@ -145,8 +145,42 @@ class LocationHelper {
 //        fields.add(Place.Field.ADDRESS)
 //        val currentPlaceRequest = FindCurrentPlaceRequest.newInstance(fields)
 //
-//        currentPlaceTask = placesClient.findCurrentPlace(currentPlaceRequest)
+//        val currentPlaceTask = placesClient.findCurrentPlace(currentPlaceRequest)
+
 //
+
+        // Use fields to define the data types to return.
+//        List<Place.Field> placeFields = Collections.singletonList(Place.Field.NAME);
+//
+//        // Use the builder to create a FindCurrentPlaceRequest.
+//        FindCurrentPlaceRequest request =
+//                FindCurrentPlaceRequest.newInstance(placeFields);
+//
+//        // Call findCurrentPlace and handle the response (first check that the user has granted permission).
+//        if (ContextCompat.checkSelfPermission(this, ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+//            Task<FindCurrentPlaceResponse> placeResponse = placesClient.findCurrentPlace(request);
+//            placeResponse.addOnCompleteListener(task -> {
+//                if (task.isSuccessful()){
+//                    FindCurrentPlaceResponse response = task.getResult();
+//                    for (PlaceLikelihood placeLikelihood : response.getPlaceLikelihoods()) {
+//                        Log.i(TAG, String.format("Place '%s' has likelihood: %f",
+//                                placeLikelihood.getPlace().getName(),
+//                                placeLikelihood.getLikelihood()));
+//                    }
+//                } else {
+//                    Exception exception = task.getException();
+//                    if (exception instanceof ApiException) {
+//                        ApiException apiException = (ApiException) exception;
+//                        Log.e(TAG, "Place not found: " + apiException.getStatusCode());
+//                    }
+//                }
+//            });
+//        } else {
+//            // A local method to request required permissions;
+//            // See https://developer.android.com/training/permissions/requesting
+//            getLocationPermission();
+//        }
+
     }
 
     private fun addPlaceToList(activity: Activity, place: Location) {
@@ -156,14 +190,14 @@ class LocationHelper {
         val lastLocation = if (locationList.size > 0) locationList.last() else null
         val locationBitmap = getLocationPicture(place)
 
-        Log.d("TAG", "trying to add to list!")
-        Log.d("TAG", "Address is " + address?.getAddressLine(0))
+//        Log.d("TAG", "trying to add to list!")
+//        Log.d("TAG", "Address is " + address?.getAddressLine(0))
 
         if (address === null || address.getAddressLine(0) == "") {
             return
         }
 
-        if (lastLocation !== null && lastLocation.latitude != place.latitude || lastLocation !== null && lastLocation.longitude != place.longitude) { // don't just continuously add the last place!
+        if (lastLocation !== null && lastLocation.address !== address.getAddressLine(0)) { // don't just continuously add the last place!
             locationList.add(LocationData(latLng, address))
             if (locationList.size > LOCATION_LIST_MAX_SIZE) {
                 locationList = locationList.drop(locationList.size - LOCATION_LIST_MAX_SIZE).toMutableList()   // remove the first n elements from the list where n is the number of elements more than the set max we want to store.
@@ -237,5 +271,15 @@ class LocationHelper {
     fun getLocationList(): MutableList<LocationData> {
                 Log.d("TAG", "Location list length is " + locationList.size)
         return locationList
+    }
+
+    fun clearAllButLatest() {
+        if (locationList.size > 0)
+            locationList = locationList.drop(locationList.size - 1).toMutableList()     // drop all elements but the last one
+    }
+
+    fun clearItemAtPosition(pos: Int) {
+        if (locationList.size > 0 && locationList.size >= pos)
+            locationList.removeAt(pos)     // drop specified element
     }
 }

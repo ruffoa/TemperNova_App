@@ -1,6 +1,5 @@
 package com.example.tempernova
 
-import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
@@ -19,12 +18,13 @@ import android.graphics.Color
 import android.graphics.drawable.TransitionDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import android.view.MenuItem
 import androidx.navigation.fragment.NavHostFragment
-import androidx.recyclerview.widget.StaggeredGridLayoutManager
-//import com.example.tempernova.adapters.CardListAdapter
 import com.example.tempernova.helpers.RepeatListener
 import com.example.tempernova.helpers.Bluetooth
 import com.example.tempernova.helpers.LocationHelper
+import android.view.Menu
+
 
 class MainActivity : AppCompatActivity() {
     var temperature: Int = 68
@@ -42,6 +42,8 @@ class MainActivity : AppCompatActivity() {
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
 
         val navController = findNavController(R.id.nav_host_fragment)
+
+        setSupportActionBar(findViewById(R.id.appbar))  // set the appbar (orange thing with fragment name in it) to be the custom one we designed with buttons on it :)
 
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
@@ -180,6 +182,32 @@ class MainActivity : AppCompatActivity() {
             childFragments.forEach { fragment ->
                 fragment.onActivityResult(requestCode, resultCode, data)
             }
+        }
+    }
+
+    // create an action bar button
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // R.menu.mymenu is a reference to an xml file named mymenu.xml which should be inside your res/menu directory.
+        // If you don't have res/menu, just create a directory named "menu" inside res
+        menuInflater.inflate(R.menu.default_menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+        R.id.action_settings -> {
+            // User chose the "Settings" item, show the app settings UI...
+            true
+        }
+
+        R.id.action_about -> {
+            // User chose the "About" action, show the about page...
+            true
+        }
+
+        else -> {
+            // If we got here, the user's action was not recognized.
+            // Invoke the superclass to handle it.
+            super.onOptionsItemSelected(item)
         }
     }
 }
