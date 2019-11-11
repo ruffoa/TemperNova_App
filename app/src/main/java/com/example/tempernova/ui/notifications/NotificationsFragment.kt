@@ -1,18 +1,28 @@
 package com.example.tempernova.ui.notifications
 
 import android.os.Bundle
+import android.util.Log
 import android.view.*
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.app.ActivityOptionsCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.tempernova.MainActivity
+import com.example.tempernova.MapsActivity
 
 import com.example.tempernova.R
 import com.example.tempernova.adapters.CardListAdapter
 import com.example.tempernova.helpers.LocationHelper
+import com.example.tempernova.ui.maps.MapsFragment
+import com.google.android.gms.maps.MapFragment
+import com.google.android.gms.maps.model.LatLng
 import kotlinx.android.synthetic.main.card_view.*
 import kotlinx.android.synthetic.main.fragment_notifications.*
 
@@ -26,6 +36,32 @@ class NotificationsFragment : Fragment() {
     private val onItemClickListener = object : CardListAdapter.OnItemClickListener {
         override fun onItemClick(view: View, position: Int) {
             Toast.makeText(context, "Clicked $position", Toast.LENGTH_SHORT).show()
+
+
+//            var fragment = MapsFragment()
+//
+//            activity!!.supportFragmentManager
+//                .beginTransaction()
+//                .replace(R.id.nav_host_fragment, fragment)
+//                .addToBackStack(tag)
+//                .commit()
+            val latLng = LatLng(locationList[position].latitude, locationList[position].longitude)
+
+            val intent = MapsActivity.newIntent(activity!!, latLng)
+            Log.d("TAG", "Location being sent (latlng) is: " + latLng.latitude + " - " + latLng.longitude)
+
+            // 1
+            val placeImage = view.findViewById<ImageView>(R.id.cardImage)
+            val placeNameHolder = view.findViewById<LinearLayout>(R.id.cardTitleHolder)
+
+            // 2
+            val imagePair = Pair(cardImage as View, "tImage")
+            val holderPair = Pair(cardTitleHolder as View, "tNameHolder")
+
+            // 3
+//            val options = ActivityOptionsCompat.makeSceneTransitionAnimation(activity!!,
+//                imagePair, holderPair)
+            ActivityCompat.startActivity(activity!!, intent, null)
         }
     }
 
