@@ -1,6 +1,5 @@
 package com.example.tempernova
 
-import android.app.Activity
 import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
@@ -19,11 +18,13 @@ import android.graphics.Color
 import android.graphics.drawable.TransitionDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
-import android.webkit.WebViewFragment
+import android.view.MenuItem
 import androidx.navigation.fragment.NavHostFragment
 import com.example.tempernova.helpers.RepeatListener
 import com.example.tempernova.helpers.Bluetooth
-import com.example.tempernova.ui.home.HomeFragment
+import com.example.tempernova.helpers.LocationHelper
+import android.view.Menu
+
 
 class MainActivity : AppCompatActivity() {
     var temperature: Int = 68
@@ -33,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     lateinit var bluetoothAdapter: BluetoothAdapter
     var bluetoothClass: Bluetooth = Bluetooth()
     var bluetoothStatus: Bluetooth.BluetoothStates = Bluetooth.BluetoothStates.UNAVAILABLE
+    lateinit var locationHelper: LocationHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +42,8 @@ class MainActivity : AppCompatActivity() {
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
 
         val navController = findNavController(R.id.nav_host_fragment)
+
+        setSupportActionBar(findViewById(R.id.appbar))  // set the appbar (orange thing with fragment name in it) to be the custom one we designed with buttons on it :)
 
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
@@ -50,20 +54,49 @@ class MainActivity : AppCompatActivity() {
         mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
         temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
         bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
+
+        if (!::locationHelper.isInitialized) {
+            locationHelper = LocationHelper()
+            locationHelper.setUpLocationUpdates(this)
+            locationHelper.setUpPlacesApi(this)
+            locationHelper.updateStateAndStartLocationUpdates(this)
+        }
     }
 
     override fun onPause() {
         super.onPause()
         saveIntPref(temperature, getString(R.string.temperature_preference_key))
+
+        if (::locationHelper.isInitialized)
+            locationHelper.storeLocationList(this)
     }
 
     override fun onStop() {
         super.onStop()
         saveIntPref(temperature, getString(R.string.temperature_preference_key))
+
+        if (::locationHelper.isInitialized)
+            locationHelper.storeLocationList(this)
     }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (::locationHelper.isInitialized)
+            locationHelper.readLocationListFromPref(this)
+    }
+
 
     fun readIntegerSharedPrefs(default: Int, key: String): Int {
         return mPrefs?.getInt(key, default) ?: 0
+    }
+
+    fun readFloatSharedPrefs(default: Float, key: String): Float {
+        return mPrefs?.getFloat(key, default) ?: 0f
+    }
+
+    fun readStringSharedPrefs(default: String, key: String): String {
+        return mPrefs?.getString(key, default) ?: "emptyString"
     }
 
     fun bindButtonFunctions(view: View) {
@@ -122,6 +155,20 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun saveFloatPref(value: Float, pref: String) {
+        with(mPrefs!!.edit()) {
+            putFloat(pref, value)
+            commit()
+        }
+    }
+
+    fun saveStringPref(value: String, pref: String) {
+        with(mPrefs!!.edit()) {
+            putString(pref, value)
+            commit()
+        }
+    }
+
     fun checkAndUpdateBluetoothStatus() {
         bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
     }
@@ -135,6 +182,32 @@ class MainActivity : AppCompatActivity() {
             childFragments.forEach { fragment ->
                 fragment.onActivityResult(requestCode, resultCode, data)
             }
+        }
+    }
+
+    // create an action bar button
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        // R.menu.mymenu is a reference to an xml file named mymenu.xml which should be inside your res/menu directory.
+        // If you don't have res/menu, just create a directory named "menu" inside res
+        menuInflater.inflate(R.menu.default_menu, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+        R.id.action_settings -> {
+            // User chose the "Settings" item, show the app settings UI...
+            true
+        }
+
+        R.id.action_about -> {
+            // User chose the "About" action, show the about page...
+            true
+        }
+
+        else -> {
+            // If we got here, the user's action was not recognized.
+            // Invoke the superclass to handle it.
+            super.onOptionsItemSelected(item)
         }
     }
 }

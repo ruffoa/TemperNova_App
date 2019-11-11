@@ -2,4 +2,5 @@
 <resources>
     <integer name="default_celcius_temperature">75</integer>
     <integer name="bluetooth_request_code">111</integer>
+    <integer name="location_request_code">123</integer>
 </resources>
