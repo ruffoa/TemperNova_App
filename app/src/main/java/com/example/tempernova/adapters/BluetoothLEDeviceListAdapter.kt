@@ -5,9 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.example.tempernova.R
+import com.example.tempernova.ui.bluetooth.BluetoothDeviceListFragment
+import kotlinx.android.synthetic.main.fragment_bluetooth_device_info.view.*
 
 /**
  * [RecyclerView.Adapter] that can display a [DummyItem] and makes a call to the
@@ -16,7 +17,7 @@ import com.example.tempernova.R
  */
 class BTLEDeviceListAdapter(
     private val devices: MutableList<BluetoothDevice>,
-    private val listener: Fragment
+    private val listener: BluetoothDeviceListFragment
 )
     : RecyclerView.Adapter<BTLEDeviceListAdapter.ViewHolder>() {
 
@@ -27,7 +28,7 @@ class BTLEDeviceListAdapter(
             val item = v.tag as BluetoothDevice
             // Notify the active callbacks interface (the activity, if the fragment is attached to
             // one) that an item has been selected.
-//            listener.onDeviceSelected(item)
+            listener.onDeviceSelected(item)
         }
     }
 
@@ -42,8 +43,8 @@ class BTLEDeviceListAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-//        val view = LayoutInflater.from(parent.context)
-//            .inflate(R.layout.fragment_btdevice, parent, false)
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.fragment_bluetooth_device_info, parent, false)
         return ViewHolder(view)
     }
 
@@ -65,8 +66,8 @@ class BTLEDeviceListAdapter(
     override fun getItemCount(): Int = devices.size
 
     inner class ViewHolder(val mView: View) : RecyclerView.ViewHolder(mView) {
-        val mIdView: TextView = mView.device_name
-        val mContentView: TextView = mView.content
+        val mIdView: TextView = mView.device_title
+        val mContentView: TextView = mView.device_info
 
         override fun toString(): String {
             return super.toString() + " '" + mContentView.text + "'"

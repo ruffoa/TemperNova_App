@@ -15,6 +15,7 @@ import android.util.Log
 import androidx.core.app.ActivityCompat.startActivityForResult
 import com.example.tempernova.R
 import com.example.tempernova.adapters.BTLEDeviceListAdapter
+import com.example.tempernova.ui.bluetooth.BluetoothDeviceListFragment
 
 private const val SCAN_PERIOD: Long = 10000
 
@@ -68,7 +69,7 @@ class Bluetooth {
         // Close proxy connection after use.
         bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HEADSET, bluetoothHeadset)
 
-        bluetoothDeviceListAdapter = BTLEDeviceListAdapter(bluetoothDevices, context)
+        bluetoothDeviceListAdapter = BTLEDeviceListAdapter(bluetoothDevices, BluetoothDeviceListFragment())
         return BluetoothStates.ON
     }
 
