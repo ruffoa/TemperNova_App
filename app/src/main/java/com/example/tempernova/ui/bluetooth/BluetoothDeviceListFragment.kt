@@ -36,7 +36,7 @@ class BluetoothDeviceListFragment : Fragment() {
         super.onAttach(context)
         if (context is OnListFragmentInteractionListener) {
             listener = context
-            deviceListAdapter = BTLEDeviceListAdapter(mutableListOf(), listener!!)
+//            deviceListAdapter = BTLEDeviceListAdapter(mutableListOf(), listener!!)
         } else {
             throw RuntimeException(context.toString() + " must implement OnListFragmentInteractionListener")
         }

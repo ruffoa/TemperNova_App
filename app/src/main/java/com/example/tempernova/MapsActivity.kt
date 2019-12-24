@@ -2,19 +2,23 @@ package com.example.tempernova
 
 import android.content.Context
 import android.content.Intent
-import android.location.Location
+import android.graphics.BitmapFactory
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.BitmapDescriptor
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
+import android.graphics.Bitmap
+import androidx.core.app.ComponentActivity.ExtraData
+import androidx.core.content.ContextCompat.getSystemService
+import android.icu.lang.UCharacter.GraphemeClusterBreak.T
+
+
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
 
@@ -60,7 +64,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val longitude = intent.getDoubleExtra(INTENT_LONGITUDE, 0.0)
 
         val mugLocation = LatLng(latitude, longitude)
-        mMap.addMarker(MarkerOptions().position(mugLocation).title("Mug"))
+
+        val b = BitmapFactory.decodeResource(resources, R.drawable.logo_round)
+        val smallMarker = Bitmap.createScaledBitmap(b, 80, 80, false)
+
+        mMap.addMarker(MarkerOptions().position(mugLocation).title("Mug").icon(BitmapDescriptorFactory.fromBitmap(smallMarker)))
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mugLocation, 18f))
     }
 }
