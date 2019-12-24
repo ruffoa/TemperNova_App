@@ -16,6 +16,11 @@ import com.example.tempernova.components.BannerComponent
 import com.example.tempernova.helpers.Bluetooth
 import com.sergivonavi.materialbanner.Banner
 import com.sergivonavi.materialbanner.BannerInterface
+import android.graphics.drawable.ColorDrawable
+import android.os.Handler
+import android.view.WindowManager
+import android.widget.PopupWindow
+import android.view.Gravity
 
 class HomeFragment : Fragment() {
 
@@ -41,6 +46,9 @@ class HomeFragment : Fragment() {
         (activity as MainActivity).checkAndUpdateBluetoothStatus()
 
         checkBluetooth(root)
+        scanForDevices(root)
+
+        waitForResult(root)
 
         return root
     }
@@ -58,6 +66,60 @@ class HomeFragment : Fragment() {
                 banner.dismiss()
             }
         }
+    }
+
+    fun scanForDevices(view: View) {
+        if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.ON)
+            (activity as MainActivity).bluetoothClass.scanDevices()
+    }
+
+    fun showDevices(view: View) {
+        val args = Bundle()
+        args.putString("devices", (activity as MainActivity).bluetoothClass.getDeviceList().toString())
+
+//        val bluetoothPopup = Dialog(context!!, android.R.style.Theme_Black_NoTitleBar)
+//        bluetoothPopup.getWindow()!!.setBackgroundDrawable(ColorDrawable(Color.argb(100, 0, 0, 0)))
+//        bluetoothPopup.setContentView(R.layout.bluetooth_popup)
+//        bluetoothPopup.setCancelable(true)
+//        bluetoothPopup.show()
+
+        val popupView = LayoutInflater.from(activity).inflate(R.layout.bluetooth_popup, null)
+        val popupWindow = PopupWindow(
+            popupView,
+            WindowManager.LayoutParams.MATCH_PARENT,
+            WindowManager.LayoutParams.MATCH_PARENT
+        )
+
+        // define your view here that found in popup_layout
+        // for example let consider you have a button
+
+        val devices = popupView.findViewById(R.id.bluetooth_popup_devices) as TextView
+        var devString = ""
+        (activity as MainActivity).bluetoothClass.getDeviceList().forEach{dev ->
+            devString += dev.name + ": " + dev.address + " " + dev.type + " " + dev.bondState + "\n"
+        }
+
+        devices.text = devString
+
+        // If the PopupWindow should be focusable
+        popupWindow.isFocusable = true
+//        popupWindow.elevation = 2f
+
+        // If you need the PopupWindow to dismiss when when touched outside
+        popupWindow.setBackgroundDrawable(ColorDrawable())
+
+        popupView.setOnTouchListener(View.OnTouchListener { v, event ->
+            popupWindow.dismiss()
+            true
+        })
+
+        // Using location, the PopupWindow will be displayed right under anchorView
+        popupWindow.showAtLocation(
+            view.rootView, Gravity.CENTER, 0, 0)
+    }
+
+    fun waitForResult(view: View) {
+        Handler().postDelayed({ showDevices(view) }, 5000)    // wait for 5 seconds...
     }
 
     private fun displayWarningBanner(view: View, msg: String, actionMsg: String) {

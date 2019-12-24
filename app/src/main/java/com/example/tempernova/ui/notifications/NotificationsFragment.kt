@@ -35,8 +35,7 @@ class NotificationsFragment : Fragment() {
 
     private val onItemClickListener = object : CardListAdapter.OnItemClickListener {
         override fun onItemClick(view: View, position: Int) {
-            Toast.makeText(context, "Clicked $position", Toast.LENGTH_SHORT).show()
-
+            Toast.makeText(context, "Mug position", Toast.LENGTH_SHORT).show()
 
 //            var fragment = MapsFragment()
 //
