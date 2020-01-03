@@ -24,7 +24,7 @@ import com.example.tempernova.helpers.RepeatListener
 import com.example.tempernova.helpers.Bluetooth
 import com.example.tempernova.helpers.LocationHelper
 import android.view.Menu
-
+import androidx.core.app.ActivityCompat
 
 class MainActivity : AppCompatActivity() {
     var temperature: Int = 68
@@ -196,6 +196,10 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.action_settings -> {
             // User chose the "Settings" item, show the app settings UI...
+
+            val intent = SettingsActivity.newIntent(this)
+            ActivityCompat.startActivity(this!!, intent, null)
+
             true
         }
 

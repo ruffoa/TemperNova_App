@@ -4,10 +4,11 @@ import android.app.Activity
 import android.bluetooth.*
 import android.bluetooth.BluetoothDevice.TRANSPORT_LE
 import android.bluetooth.BluetoothGatt.GATT_SUCCESS
-import android.bluetooth.le.BluetoothLeScanner
+import android.bluetooth.BluetoothGattCharacteristic.PROPERTY_READ
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.os.Handler
@@ -19,8 +20,7 @@ import com.example.tempernova.adapters.BTLEDeviceListAdapter
 import com.example.tempernova.ui.bluetooth.BluetoothDeviceListFragment
 import com.polidea.rxandroidble2.RxBleClient
 import com.polidea.rxandroidble2.scan.ScanSettings
-import io.reactivex.internal.disposables.DisposableHelper.dispose
-import io.reactivex.disposables.Disposable
+import java.util.*
 
 private const val SCAN_PERIOD: Long = 10000
 
@@ -31,12 +31,19 @@ class Bluetooth {
 //    val leDeviceListAdapter: LeDeviceListAdapter = null // this is annoying :(
     private val handler: Handler = Handler(Looper.getMainLooper())
     private lateinit var bluetoothDeviceListAdapter: BTLEDeviceListAdapter
+    private lateinit var bluetoothGatt: BluetoothGatt
     private var bluetoothDevices: MutableList<BluetoothDevice> = mutableListOf()
     private lateinit var rxBleClient: RxBleClient
     private var deviceList: MutableList<BluetoothDevice> = mutableListOf()
     private lateinit var connectedDevice: BluetoothGatt
 
+    private val commandQueue: Queue<Runnable>? = null
+    private var commandQueueBusy = false
     private var mScanning: Boolean = false
+    private var nrTries: Int = 0
+    private var isRetrying: Boolean = false
+    private val MAX_TRIES: Int = 3
+    private var bleHandler = Handler()
 
     enum class BluetoothStates {
         UNAVAILABLE, OFF, ON, CONNECTED
@@ -90,7 +97,7 @@ class Bluetooth {
         }
     }
 
-    fun scanDevices(deleteStoredDevices: Boolean = false) { // from https://medium.com/@martijn.van.welie/making-android-ble-work-part-1-a736dcd53b02
+    fun scanDevices(deleteStoredDevices: Boolean = false, specificDeviceToFind: BluetoothDevice? = null) { // from https://medium.com/@martijn.van.welie/making-android-ble-work-part-1-a736dcd53b02
         val scanner = bluetoothAdapter!!.bluetoothLeScanner
 
         val scanSettings = android.bluetooth.le.ScanSettings.Builder()
@@ -98,7 +105,14 @@ class Bluetooth {
             .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
             .build()
 
-        val scanFilters: List<ScanFilter>? = null
+        var scanFilters: MutableList<ScanFilter>? = null
+
+        if (specificDeviceToFind !== null) {
+            val filter = ScanFilter.Builder()
+                .setDeviceAddress(specificDeviceToFind.address)
+                .build()
+            scanFilters!!.add(filter)
+        }
 
         if (deleteStoredDevices)
             deviceList = mutableListOf()
@@ -112,10 +126,186 @@ class Bluetooth {
         }
     }
 
+    private fun nextCommand() { // If there is still a command being executed then bail out
+        if (commandQueueBusy) {
+            return
+        }
+        // Check if we still have a valid gatt object
+        if (bluetoothGatt == null) {
+            Log.e(
+                TAG,
+                java.lang.String.format(
+                    "ERROR: GATT is 'null' for peripheral '%s', clearing command queue",
+                    connectedDevice.device
+                )
+            )
+            commandQueue!!.clear()
+            commandQueueBusy = false
+            return
+        }
+        // Execute the next command in the queue
+        if (commandQueue!!.size > 0) {
+            val bluetoothCommand = commandQueue.peek()
+            commandQueueBusy = true
+            nrTries = 0
+            bleHandler.post(Runnable {
+                try {
+                    bluetoothCommand.run()
+                } catch (ex: Exception) {
+                    Log.e(
+                        TAG,
+                        java.lang.String.format(
+                            "ERROR: Command exception for device '%s'",
+                            bluetoothGatt.device
+                        ),
+                        ex
+                    )
+                }
+            })
+        }
+    }
+
+    private fun retryCommand() {
+        commandQueueBusy = false
+        val currentCommand = commandQueue!!.peek()
+        if (currentCommand != null) {
+            if (nrTries >= MAX_TRIES) { // Max retries reached, give up on this one and proceed
+                Log.v(TAG, "Max number of tries reached")
+                commandQueue.poll()
+            } else {
+                isRetrying = true
+            }
+        }
+        nextCommand()
+    }
+
+    fun readCharacteristic(characteristic: BluetoothGattCharacteristic?, gatt: BluetoothGatt): Boolean {
+        if (gatt == null) {
+            Log.e(TAG, "ERROR: Gatt is 'null', ignoring read request")
+            return false
+        }
+        // Check if characteristic is valid
+        if (characteristic == null) {
+            Log.e(TAG, "ERROR: Characteristic is 'null', ignoring read request")
+            return false
+        }
+        // Check if this characteristic actually has READ property
+        if (characteristic.properties and PROPERTY_READ == 0) {
+            Log.e(TAG, "ERROR: Characteristic cannot be read")
+            return false
+        }
+        // Enqueue the read command now that all checks have been passed
+        val result = commandQueue!!.add(Runnable {
+            if (!gatt.readCharacteristic(characteristic)) {
+                Log.e(
+                    TAG,
+                    String.format(
+                        "ERROR: readCharacteristic failed for characteristic: %s",
+                        characteristic.uuid
+                    )
+                )
+                completedCommand()
+
+            } else {
+                Log.d(
+                    TAG,
+                    String.format(
+                        "reading characteristic <%s>",
+                        characteristic.uuid
+                    )
+                )
+                nrTries++
+            }
+        })
+
+        if (result) {
+            nextCommand()
+        } else {
+            Log.e(TAG, "ERROR: Could not enqueue read characteristic command")
+        }
+
+        return result
+    }
+
+
+    private fun connect(context: Context, device: BluetoothDevice) {
+        val gatt = device.connectGatt(context, false, bleGattCallback, TRANSPORT_LE)
+        bluetoothGatt = gatt
+    }
+
     fun connectToDevice(context: Context, device: BluetoothDevice) {
         //connectGatt(Context context, boolean autoConnect,
         //        BluetoothGattCallback callback)
-//        connectedDevice = device.connectGatt(context, true, bluetoothGattCallback, TRANSPORT_LE)
+        //        connectedDevice = device.connectGatt(context, true, bluetoothGattCallback, TRANSPORT_LE)
+
+        // Get device object for a mac address
+        val device = bluetoothAdapter!!.getRemoteDevice(device.address)
+        // Check if the peripheral is cached or not
+        val deviceType = device.type
+
+        if(deviceType == BluetoothDevice.DEVICE_TYPE_UNKNOWN) {
+            // The peripheral is not cached
+            // we need to re-scan for it :(
+
+            scanDevices(false, device)
+        } else {
+            // The peripheral is cached - we've already scanned for it!
+            // lets call the connect function!
+            connect(context, device)
+        }
+    }
+
+    private val bleGattCallback: BluetoothGattCallback = object : BluetoothGattCallback() {
+        override fun onCharacteristicRead(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            super.onCharacteristicRead(gatt, characteristic, status)
+
+            // Perform some checks on the status field
+            if (status != GATT_SUCCESS) {
+                Log.e(TAG, String.format(Locale.ENGLISH,"ERROR: Read failed for characteristic: %s, status %d", characteristic!!.getUuid(), status))
+                completedCommand()
+
+                return
+            }
+
+            // Characteristic has been read so processes it
+            // ...
+            // We done, complete the command
+            completedCommand()
+        }
+
+
+        override fun onCharacteristicWrite(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic,
+            status: Int
+        ) {
+            if (status != GATT_SUCCESS) {
+                Log.d("onCharacteristicWrite", "Failed write, retrying")
+                gatt.writeCharacteristic(characteristic)
+            }
+//            Log.d("onCharacteristicWrite", byteArrToHex(characteristic.value))
+            super.onCharacteristicWrite(gatt, characteristic, status)
+        }
+
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt,
+            characteristic: BluetoothGattCharacteristic
+        ) {
+            super.onCharacteristicChanged(gatt, characteristic)
+//            Log.d("onCharacteristicChanged", byteArrToHex(characteristic.value))
+//            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic)
+        }
+    }
+
+    private fun completedCommand() {
+        commandQueueBusy = false
+        isRetrying = false
+        commandQueue!!.poll()
+        nextCommand()
     }
 
     fun getDeviceList(): List<BluetoothDevice> {
@@ -154,23 +344,31 @@ class Bluetooth {
         }
     }
 
-//    fun onConnectionStateChange(final BluetoothGatt gatt, final int status, final int newState) {
-//        if (status == GATT_SUCCESS) {
-//            if (newState == BluetoothProfile.STATE_CONNECTED) {
-//                // We successfully connected, proceed with service discovery
-//                gatt.discoverServices();
-//            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-//                // We successfully disconnected on our own request
-//                gatt.close();
-//            } else {
-//                // We're CONNECTING or DISCONNECTING, ignore for now
-//            }
-//        } else {
-//            // An error happened...figure out what happened!
-//            ...
-//            gatt.close();
-//        }
-//    }
+    fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+        if (status == GATT_SUCCESS) {
+            when (newState) {
+                BluetoothProfile.STATE_CONNECTED -> {
+                    // We successfully connected, proceed with service discovery
+
+                    gatt.discoverServices()
+                }
+                BluetoothProfile.STATE_DISCONNECTED -> {
+                    // We successfully disconnected on our own request
+                    gatt.close()
+                }
+                else -> {
+                    // We're CONNECTING or DISCONNECTING, ignore for now
+                }
+            }
+        } else {
+            // An error happened...figure out what happened!
+            // ...
+
+            Log.e("BLUE CONNECT ERR", "Error: $status")
+
+            gatt.close()
+        }
+    }
 
     private val leScanCallback = BluetoothAdapter.LeScanCallback { device, rssi, scanRecord ->
 //        runOnUiThread {
