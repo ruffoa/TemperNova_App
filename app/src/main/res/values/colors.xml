@@ -4,4 +4,8 @@
     <color name="colorPrimaryDark">#F4511E</color>    <!-- <color name="colorPrimaryDark">#00574B</color> -->
     <color name="colorAccent">#D81B60</color>
     <color name="colorTempCooling">#3949AB</color>
+    <color name="colorTempDone">#00ef52</color>
+    <color name="colorTempDoneDark">#00b72b</color>
+    <color name="colorTempDoneDarkest">#009412</color>
+    <color name="colorTempDoneHex">#36A96C</color>
 </resources>

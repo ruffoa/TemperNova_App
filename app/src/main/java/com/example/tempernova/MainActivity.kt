@@ -29,11 +29,14 @@ import androidx.core.app.ActivityCompat
 class MainActivity : AppCompatActivity() {
     var temperature: Int = 68
     var currTemp: Int = 69
+    var isDisabled: Boolean = false
+
     var transitiondrawable: Drawable? = null
     var mPrefs: SharedPreferences? = null
-    lateinit var bluetoothAdapter: BluetoothAdapter
+
     var bluetoothClass: Bluetooth = Bluetooth()
     var bluetoothStatus: Bluetooth.BluetoothStates = Bluetooth.BluetoothStates.UNAVAILABLE
+
     lateinit var locationHelper: LocationHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,6 +105,12 @@ class MainActivity : AppCompatActivity() {
     fun bindButtonFunctions(view: View) {
         val tempDownButton: Button = view.findViewById(R.id.tempDownButton)
         val tempUpButton: Button = view.findViewById(R.id.tempUpButton)
+        val tempDisplayButton: Button = view.findViewById(R.id.tempDisplayButton)
+
+        tempDisplayButton.setOnClickListener {
+            isDisabled = !isDisabled
+            updateTemp(view)
+        }
 
         tempUpButton.setOnClickListener {
             temperature++
@@ -128,24 +137,31 @@ class MainActivity : AppCompatActivity() {
     fun updateTemp(view: View) {
         val tempDisplayButton: Button = view.findViewById(R.id.tempDisplayButton)
         tempDisplayButton.text = temperature.toString() + getString(R.string.temperature_celcius_unit_string)
-        if (temperature > currTemp) {
-            val BackGroundColor = arrayOf(
-                ColorDrawable(Color.parseColor("#ff0000")),
-                ColorDrawable(Color.parseColor("#56ff00"))
-            )
 
-            transitiondrawable = TransitionDrawable(BackGroundColor)
-            transitiondrawable = resources.getDrawable(R.drawable.button_bg_transition_default_to_warm, theme)
-//            tempDisplayButton.background = transitiondrawable // broken, so disabled for now...
-            tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorPrimaryDark))
-            tempDisplayButton.isEnabled = true
-        } else if (temperature === currTemp) {
-            tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.material_on_surface_disabled))
-            tempDisplayButton.isEnabled = false
-        } else {
-            tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorTempCooling))
-            tempDisplayButton.isEnabled = true
+        when {
+            isDisabled -> {
+                tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.material_on_surface_disabled))
+            }
+            temperature > currTemp -> {
+                val BackGroundColor = arrayOf(
+                    ColorDrawable(Color.parseColor("#ff0000")),
+                    ColorDrawable(Color.parseColor("#56ff00"))
+                )
+
+                transitiondrawable = TransitionDrawable(BackGroundColor)
+                transitiondrawable = resources.getDrawable(R.drawable.button_bg_transition_default_to_warm, theme)
+    //            tempDisplayButton.background = transitiondrawable // broken, so disabled for now...
+                tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorPrimaryDark))
+            }
+            temperature === currTemp -> {
+                tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorTempDoneHex))
+            }
+            else -> {
+                tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorTempCooling))
+            }
         }
+
+        tempDisplayButton.isEnabled = !isDisabled
     }
 
     fun saveIntPref(value: Int, pref: String) {
@@ -198,7 +214,7 @@ class MainActivity : AppCompatActivity() {
             // User chose the "Settings" item, show the app settings UI...
 
             val intent = SettingsActivity.newIntent(this)
-            ActivityCompat.startActivity(this!!, intent, null)
+            ActivityCompat.startActivity(this, intent, null)
 
             true
         }

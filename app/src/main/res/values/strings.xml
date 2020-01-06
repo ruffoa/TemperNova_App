@@ -16,6 +16,8 @@
     <string name="bluetooth_unavailable_action">Try Turning On Bluetooth</string>
     <string name="bluetooth_off">You have disabled Bluetooth.</string>
     <string name="bluetooth_off_action">Turn on Bluetooth.</string>
+    <string name="bluetooth_select_device">Select your device for pairing.</string>
+    <string name="bluetooth_select_device_action">Select a Device</string>
 
     <string name="action_settings">Settings</string>
     <string name="action_about">About</string>

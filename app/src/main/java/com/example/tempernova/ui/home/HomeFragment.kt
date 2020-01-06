@@ -36,10 +36,10 @@ class HomeFragment : Fragment() {
         homeViewModel =
             ViewModelProviders.of(this).get(HomeViewModel::class.java)
         val root = inflater.inflate(R.layout.fragment_home, container, false)
-        val textView: TextView = root.findViewById(R.id.text_home)
-        homeViewModel.text.observe(this, Observer {
-            textView.text = it
-        })
+//        val textView: TextView = root.findViewById(R.id.text_home)
+//        homeViewModel.text.observe(this, Observer {
+//            textView.text = it
+//        })
 
         (activity as MainActivity).bindButtonFunctions(root)
         (activity as MainActivity).updateTemp(root)
@@ -74,6 +74,8 @@ class HomeFragment : Fragment() {
     }
 
     fun showDevices(view: View) {
+        displayWarningBanner(view, getString(R.string.bluetooth_select_device), getString(R.string.bluetooth_select_device_action))
+
         val args = Bundle()
         args.putString("devices", (activity as MainActivity).bluetoothClass.getDeviceList().toString())
 
