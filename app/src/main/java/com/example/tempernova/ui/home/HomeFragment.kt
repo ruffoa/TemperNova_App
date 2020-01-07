@@ -141,7 +141,7 @@ class HomeFragment : Fragment() {
     }
 
     private fun displayBluetoothPairingBanner(view: View, msg: String, actionMsg: String) {
-        banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, actionMsg, R.drawable.ic_bluetooth_disabled_black_24dp, BannerInterface.OnClickListener {
+        banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, actionMsg, R.drawable.ic_bluetooth_black_24dp, BannerInterface.OnClickListener {
             if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.ON) {
                 val items = (activity as MainActivity).bluetoothClass.getDeviceList()
 
