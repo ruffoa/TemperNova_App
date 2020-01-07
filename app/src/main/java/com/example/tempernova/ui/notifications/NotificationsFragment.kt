@@ -7,9 +7,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
-import androidx.core.app.ActivityOptionsCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -20,8 +18,6 @@ import com.example.tempernova.MapsActivity
 import com.example.tempernova.R
 import com.example.tempernova.adapters.CardListAdapter
 import com.example.tempernova.helpers.LocationHelper
-import com.example.tempernova.ui.maps.MapsFragment
-import com.google.android.gms.maps.MapFragment
 import com.google.android.gms.maps.model.LatLng
 import kotlinx.android.synthetic.main.card_view.*
 import kotlinx.android.synthetic.main.fragment_notifications.*
@@ -35,8 +31,7 @@ class NotificationsFragment : Fragment() {
 
     private val onItemClickListener = object : CardListAdapter.OnItemClickListener {
         override fun onItemClick(view: View, position: Int) {
-            Toast.makeText(context, "Clicked $position", Toast.LENGTH_SHORT).show()
-
+            Toast.makeText(context, "${locationList[position].address}", Toast.LENGTH_LONG).show()
 
 //            var fragment = MapsFragment()
 //
