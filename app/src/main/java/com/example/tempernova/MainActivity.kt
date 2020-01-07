@@ -25,6 +25,7 @@ import com.example.tempernova.helpers.Bluetooth
 import com.example.tempernova.helpers.LocationHelper
 import android.view.Menu
 import androidx.core.app.ActivityCompat
+import kotlinx.android.synthetic.main.fragment_home.*
 
 class MainActivity : AppCompatActivity() {
     var temperature: Int = 68
@@ -136,6 +137,9 @@ class MainActivity : AppCompatActivity() {
 
     fun updateTemp(view: View) {
         val tempDisplayButton: Button = view.findViewById(R.id.tempDisplayButton)
+        val tempDownButton: Button = view.findViewById(R.id.tempDownButton)
+        val tempUpButton: Button = view.findViewById(R.id.tempUpButton)
+
         tempDisplayButton.text = temperature.toString() + getString(R.string.temperature_celcius_unit_string)
 
         when {
@@ -162,6 +166,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         tempDisplayButton.isEnabled = !isDisabled
+        tempDownButton.isEnabled = !isDisabled
+        tempUpButton.isEnabled = !isDisabled
     }
 
     fun saveIntPref(value: Int, pref: String) {

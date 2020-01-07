@@ -1,6 +1,8 @@
 package com.example.tempernova.ui.home
 
 import android.app.Activity
+import android.app.Dialog
+import android.bluetooth.BluetoothDevice
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -8,7 +10,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.example.tempernova.MainActivity
 import com.example.tempernova.R
@@ -21,12 +22,16 @@ import android.os.Handler
 import android.view.WindowManager
 import android.widget.PopupWindow
 import android.view.Gravity
+import com.example.tempernova.components.SimpleDialogComponent
 
 class HomeFragment : Fragment() {
 
     private lateinit var homeViewModel: HomeViewModel
     private val bannerClass = BannerComponent()
     private lateinit var banner: Banner
+
+    private val dialogClass = SimpleDialogComponent()
+    private lateinit var dialog: Dialog
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -58,9 +63,9 @@ class HomeFragment : Fragment() {
         println((activity as MainActivity).bluetoothStatus)
 
         if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.UNAVAILABLE) {
-            displayWarningBanner(view, getString(R.string.bluetooth_unavailable), getString(R.string.bluetooth_unavailable_action))
+            displayBluetoothDisabledWarningBanner(view, getString(R.string.bluetooth_unavailable), getString(R.string.bluetooth_unavailable_action))
         } else if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.OFF) {
-            displayWarningBanner(view, getString(R.string.bluetooth_off), getString(R.string.bluetooth_off_action))
+            displayBluetoothDisabledWarningBanner(view, getString(R.string.bluetooth_off), getString(R.string.bluetooth_off_action))
         } else {
             if (::banner.isInitialized) {
                 banner.dismiss()
@@ -73,9 +78,7 @@ class HomeFragment : Fragment() {
             (activity as MainActivity).bluetoothClass.scanDevices()
     }
 
-    fun showDevices(view: View) {
-        displayWarningBanner(view, getString(R.string.bluetooth_select_device), getString(R.string.bluetooth_select_device_action))
-
+    fun showBluetoothDebugPopup(view: View) {
         val args = Bundle()
         args.putString("devices", (activity as MainActivity).bluetoothClass.getDeviceList().toString())
 
@@ -120,11 +123,38 @@ class HomeFragment : Fragment() {
             view.rootView, Gravity.CENTER, 0, 0)
     }
 
-    fun waitForResult(view: View) {
-        Handler().postDelayed({ showDevices(view) }, 5000)    // wait for 5 seconds...
+    fun showDevices(view: View) {
+        displayBluetoothPairingBanner(view, getString(R.string.bluetooth_select_device), getString(R.string.bluetooth_select_device_action))
+//        showBluetoothDebugPopup(view)
     }
 
-    private fun displayWarningBanner(view: View, msg: String, actionMsg: String) {
+    fun waitForResult(view: View) {
+        if ((activity as MainActivity).bluetoothClass.getDeviceList().isNotEmpty())
+            showDevices(view)
+        else
+            Handler().postDelayed({ showDevices(view) }, 5000)    // wait for 5 seconds...
+    }
+
+    private fun displayChooseDeviceDialog(view: View, title: String, msg: String, icon: Int, items: List<BluetoothDevice>) {
+        dialog = dialogClass.createDialog(view, view.findViewById(R.id.home_root_linear_layout), title, msg, R.drawable.ic_settings_bluetooth_black_24dp, items)
+        dialog.show()
+    }
+
+    private fun displayBluetoothPairingBanner(view: View, msg: String, actionMsg: String) {
+        banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, actionMsg, R.drawable.ic_bluetooth_disabled_black_24dp, BannerInterface.OnClickListener {
+            if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.ON) {
+                val items = (activity as MainActivity).bluetoothClass.getDeviceList()
+
+                displayChooseDeviceDialog(view, getString(R.string.bluetooth_select_device_action), getString(R.string.bluetooth_select_device_message), R.drawable.logo_round, items)
+                it.dismiss()
+            }
+        })
+        println(banner)
+
+        banner.show()
+    }
+
+    private fun displayBluetoothDisabledWarningBanner(view: View, msg: String, actionMsg: String) {
         banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, actionMsg, R.drawable.ic_bluetooth_disabled_black_24dp, BannerInterface.OnClickListener {
             (activity as MainActivity).bluetoothClass.enableBluetooth(this.activity!!)
 

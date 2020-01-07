@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothGattCharacteristic.PROPERTY_READ
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
+import android.bluetooth.le.ScanSettings
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
@@ -18,8 +19,6 @@ import androidx.core.app.ActivityCompat.startActivityForResult
 import com.example.tempernova.R
 import com.example.tempernova.adapters.BTLEDeviceListAdapter
 import com.example.tempernova.ui.bluetooth.BluetoothDeviceListFragment
-import com.polidea.rxandroidble2.RxBleClient
-import com.polidea.rxandroidble2.scan.ScanSettings
 import java.util.*
 
 private const val SCAN_PERIOD: Long = 10000
@@ -33,7 +32,6 @@ class Bluetooth {
     private lateinit var bluetoothDeviceListAdapter: BTLEDeviceListAdapter
     private lateinit var bluetoothGatt: BluetoothGatt
     private var bluetoothDevices: MutableList<BluetoothDevice> = mutableListOf()
-    private lateinit var rxBleClient: RxBleClient
     private var deviceList: MutableList<BluetoothDevice> = mutableListOf()
     private lateinit var connectedDevice: BluetoothGatt
 
@@ -85,7 +83,6 @@ class Bluetooth {
         bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HEADSET, bluetoothHeadset)
 
         bluetoothDeviceListAdapter = BTLEDeviceListAdapter(bluetoothDevices, BluetoothDeviceListFragment())
-        rxBleClient = RxBleClient.create(context)
 
         return BluetoothStates.ON
     }
@@ -100,7 +97,7 @@ class Bluetooth {
     fun scanDevices(deleteStoredDevices: Boolean = false, specificDeviceToFind: BluetoothDevice? = null) { // from https://medium.com/@martijn.van.welie/making-android-ble-work-part-1-a736dcd53b02
         val scanner = bluetoothAdapter!!.bluetoothLeScanner
 
-        val scanSettings = android.bluetooth.le.ScanSettings.Builder()
+        val scanSettings = ScanSettings.Builder()
             .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
             .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
             .build()
@@ -331,99 +328,4 @@ class Bluetooth {
             // Ignore for now
         }
     }
-
-    private class BLEScannerCallback(val deviceListAdapter: BTLEDeviceListAdapter) : ScanCallback() {
-        override fun onScanResult(callbackType: Int, result: ScanResult?) {
-            Log.d("BLE_SCAN", "Scan result : $result")
-            deviceListAdapter.addDevice(result?.device)
-            deviceListAdapter.notifyDataSetChanged()
-        }
-
-        override fun onScanFailed(errorCode: Int) {
-            Log.d("BLE_SCAN", "Scan failed with error $errorCode")
-        }
-    }
-
-    fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-        if (status == GATT_SUCCESS) {
-            when (newState) {
-                BluetoothProfile.STATE_CONNECTED -> {
-                    // We successfully connected, proceed with service discovery
-
-                    gatt.discoverServices()
-                }
-                BluetoothProfile.STATE_DISCONNECTED -> {
-                    // We successfully disconnected on our own request
-                    gatt.close()
-                }
-                else -> {
-                    // We're CONNECTING or DISCONNECTING, ignore for now
-                }
-            }
-        } else {
-            // An error happened...figure out what happened!
-            // ...
-
-            Log.e("BLUE CONNECT ERR", "Error: $status")
-
-            gatt.close()
-        }
-    }
-
-    private val leScanCallback = BluetoothAdapter.LeScanCallback { device, rssi, scanRecord ->
-//        runOnUiThread {
-//            leDeviceListAdapter.addDevice(device)
-//            leDeviceListAdapter.notifyDataSetChanged()
-//        }
-        bluetoothDeviceListAdapter.addDevice(device)
-        bluetoothDeviceListAdapter.notifyDataSetChanged()
-    }
-
-    private fun scanLeDevice(enable: Boolean) {
-
-//        val scanCallback = BLEScannerCallback(deviceListAdapter)
-//        deviceListAdapter.clearDevices()
-
-        when (enable) {
-            true -> {
-                // Stops scanning after a pre-defined scan period.
-                handler.postDelayed({
-                    mScanning = false
-                    bluetoothAdapter!!.stopLeScan(leScanCallback)
-                }, SCAN_PERIOD)
-                mScanning = true
-                bluetoothAdapter!!.startLeScan(leScanCallback)
-            }
-            else -> {
-                mScanning = false
-                bluetoothAdapter!!.stopLeScan(leScanCallback)
-            }
-        }
-    }
-
-    fun scanForBluetoothDevices() {
-        val devices: ScanResult
-
-        val scanSubscription = rxBleClient.scanBleDevices(
-            ScanSettings.Builder()
-                // .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY) // change if needed
-                // .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES) // change if needed
-                .build()
-            // add filters if needed
-        )
-            .subscribe(
-                { scanResult ->
-//                    devices = scanResult.bleDevice
-                    // Process scan result here.
-                },
-                { throwable ->
-                    // Handle an error here.
-                }
-            )
-
-// When done, just dispose.
-        scanSubscription.dispose()
-
-    }
-
 }
