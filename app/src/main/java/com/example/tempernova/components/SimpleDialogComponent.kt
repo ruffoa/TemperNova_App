@@ -9,11 +9,20 @@ import android.view.ViewGroup
 import android.widget.ListAdapter
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
+import com.example.tempernova.MainActivity
+import com.example.tempernova.R
 import com.example.tempernova.adapters.BluetoothDeviceListAdapter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 
 class SimpleDialogComponent: DialogFragment() {
     var bluetoothDeviceListAdapter: BluetoothDeviceListAdapter = BluetoothDeviceListAdapter()
+    // Use this instance of the interface to deliver action events
+    internal lateinit var listener: SimpleDialogListener
+
+    interface SimpleDialogListener {
+        fun onDialogPositiveClick(dialog: DialogFragment)
+        fun onDialogNegativeClick(dialog: DialogFragment)
+    }
 
     override fun onCreateDialog(
         savedInstanceState: Bundle?
@@ -36,7 +45,7 @@ class SimpleDialogComponent: DialogFragment() {
     fun createDialog(view: View, dialogParent: ViewGroup, title: String, message: String, iconDrawable: Int, items: List<BluetoothDevice>): Dialog {
         var checkedItem: Int = 0
         val devList = bluetoothDeviceToStringList(items)
-        Log.d("TAG", "Dluetooth Devices ${devList.size} ${devList[0]}")
+        Log.d("TAG", "Bluetooth Devices ${devList.size} ${devList[0]}")
 
         return MaterialAlertDialogBuilder(view.context)
             // Add customization options here
@@ -46,7 +55,7 @@ class SimpleDialogComponent: DialogFragment() {
             // Confirming action
             .setPositiveButton("Confirm") { dialog, which ->
                 // Do something for button click
-
+                (view.context as MainActivity).bluetoothClass.connectToDevice(view.context, items[checkedItem])
                 Toast.makeText(view.context, devList[checkedItem], Toast.LENGTH_LONG).show()
                 dialog.dismiss()
             }

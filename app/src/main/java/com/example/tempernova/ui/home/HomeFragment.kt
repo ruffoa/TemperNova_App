@@ -19,6 +19,7 @@ import com.sergivonavi.materialbanner.Banner
 import com.sergivonavi.materialbanner.BannerInterface
 import android.graphics.drawable.ColorDrawable
 import android.os.Handler
+import android.util.Log
 import android.view.WindowManager
 import android.widget.PopupWindow
 import android.view.Gravity
@@ -149,7 +150,6 @@ class HomeFragment : Fragment() {
                 it.dismiss()
             }
         })
-        println(banner)
 
         banner.show()
     }
@@ -162,7 +162,14 @@ class HomeFragment : Fragment() {
                 it.dismiss()
             }
         })
-                println(banner)
+
+        banner.show()
+    }
+
+    fun displayBluetoothPairedBanner(view: View, msg: String, actionMsg: String) {
+        banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, actionMsg, R.drawable.ic_bluetooth_connected_black_24dp, BannerInterface.OnClickListener {
+            it.dismiss()
+        })
 
         banner.show()
     }
@@ -177,11 +184,25 @@ class HomeFragment : Fragment() {
             checkBluetooth(this.view!!)
         }
 
+        if (resultCode === Activity.RESULT_OK && requestCode === resources.getInteger(R.integer.bluetooth_choose_device_code)) {
+            println("Bluetooth Device Selection RESULT OK! ${data.toString()}")
+            val seletcedItem = data!!.getIntExtra(getString(R.string.bluetooth_intent_selected_device), -1)
+            if (seletcedItem >= 0) {
+                Log.d("BLUETOOTH PAIRING", "device chosen is: $seletcedItem")
+            }
+        }
+
         if (requestCode == (activity as MainActivity).locationHelper.REQUEST_CHECK_SETTINGS) {
             if (resultCode == Activity.RESULT_OK) {
                 (activity as MainActivity).locationHelper.setUpLocationUpdates(this.activity!!)
                 (activity as MainActivity).locationHelper.updateStateAndStartLocationUpdates(this.activity!!)
             }
+        }
+
+        if (requestCode === resources.getInteger(R.integer.bluetooth_device_conntected_code)) {
+            println("Bluetooth Device Paired!  -> Calling event!")
+            val deviceGatt = (this.activity as MainActivity).bluetoothClass.getConnectedDevice()
+            displayBluetoothPairedBanner(this.view!!, "${deviceGatt.device.name} (${deviceGatt.device.address}) ${deviceGatt.device.bondState}", getString(R.string.action_message_okay))
         }
     }
 }

@@ -1,6 +1,5 @@
 package com.example.tempernova
 
-import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -25,9 +24,11 @@ import com.example.tempernova.helpers.Bluetooth
 import com.example.tempernova.helpers.LocationHelper
 import android.view.Menu
 import androidx.core.app.ActivityCompat
+import androidx.fragment.app.DialogFragment
+import com.example.tempernova.components.SimpleDialogComponent
 import kotlinx.android.synthetic.main.fragment_home.*
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogListener {
     var temperature: Int = 68
     var currTemp: Int = 69
     var isDisabled: Boolean = false
@@ -235,5 +236,14 @@ class MainActivity : AppCompatActivity() {
             // Invoke the superclass to handle it.
             super.onOptionsItemSelected(item)
         }
+    }
+
+
+    override fun onDialogPositiveClick(dialog: DialogFragment) {
+
+    }
+
+    override fun onDialogNegativeClick(dialog: DialogFragment) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

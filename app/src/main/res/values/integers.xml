@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <integer name="default_celcius_temperature">75</integer>
+
+    <!--  Bluetooth Result Codes  -->
     <integer name="bluetooth_request_code">111</integer>
+    <integer name="bluetooth_choose_device_code">112</integer>
+    <integer name="bluetooth_device_conntected_code">119</integer>
+
     <integer name="location_request_code">123</integer>
 </resources>

@@ -12,13 +12,16 @@ import android.bluetooth.le.ScanSettings
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat.startActivityForResult
+import com.example.tempernova.MainActivity
 import com.example.tempernova.R
 import com.example.tempernova.adapters.BTLEDeviceListAdapter
 import com.example.tempernova.ui.bluetooth.BluetoothDeviceListFragment
+
 import java.util.*
 
 private const val SCAN_PERIOD: Long = 10000
@@ -94,7 +97,7 @@ class Bluetooth {
         }
     }
 
-    fun scanDevices(deleteStoredDevices: Boolean = false, specificDeviceToFind: BluetoothDevice? = null) { // from https://medium.com/@martijn.van.welie/making-android-ble-work-part-1-a736dcd53b02
+    fun scanDevices(deleteStoredDevices: Boolean = false, specificDeviceToFind: BluetoothDevice? = null, timeToScan: Long = 5000) { // from https://medium.com/@martijn.van.welie/making-android-ble-work-part-1-a736dcd53b02
         val scanner = bluetoothAdapter!!.bluetoothLeScanner
 
         val scanSettings = ScanSettings.Builder()
@@ -108,7 +111,7 @@ class Bluetooth {
             val filter = ScanFilter.Builder()
                 .setDeviceAddress(specificDeviceToFind.address)
                 .build()
-            scanFilters!!.add(filter)
+            scanFilters = mutableListOf(filter)
         }
 
         if (deleteStoredDevices)
@@ -116,7 +119,7 @@ class Bluetooth {
 
         if (scanner != null) {
             scanner.startScan(scanFilters, scanSettings, scanCallback) // get all devices for now, can choose to filter by name or mac addr later.
-            Handler().postDelayed({ scanner.stopScan(scanCallback) }, 5000)    // scan for 5 seconds...
+            Handler().postDelayed({ scanner.stopScan(scanCallback) }, timeToScan)    // scan for 5 seconds...
             Log.d("BLUETOOTH", "scan started")
         } else {
             Log.e("BLUETOOTH", "could not get scanner object")
@@ -228,6 +231,11 @@ class Bluetooth {
     private fun connect(context: Context, device: BluetoothDevice) {
         val gatt = device.connectGatt(context, false, bleGattCallback, TRANSPORT_LE)
         bluetoothGatt = gatt
+
+        Log.d(TAG, "SUCCESS: Connected to ${device.name} (${device.address})")
+        (context as MainActivity).bluetoothStatus = BluetoothStates.CONNECTED
+
+        context.setResult(R.integer.bluetooth_device_conntected_code)
     }
 
     fun connectToDevice(context: Context, device: BluetoothDevice) {
@@ -244,7 +252,9 @@ class Bluetooth {
             // The peripheral is not cached
             // we need to re-scan for it :(
 
-            scanDevices(false, device)
+            scanDevices(false, device, 500) // re-scan for ~.5 seconds to get the device info, then let's re-call this func again to try to connect!
+
+            Handler().postDelayed({ connect(context, device) }, 510)    // wait for ~.5 seconds...
         } else {
             // The peripheral is cached - we've already scanned for it!
             // lets call the connect function!
@@ -307,6 +317,10 @@ class Bluetooth {
 
     fun getDeviceList(): List<BluetoothDevice> {
         return deviceList
+    }
+
+    fun getConnectedDevice(): BluetoothGatt {
+        return this.connectedDevice
     }
 
     private val scanCallback = object : ScanCallback() {
