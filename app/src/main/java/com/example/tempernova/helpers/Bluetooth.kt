@@ -12,7 +12,6 @@ import android.bluetooth.le.ScanSettings
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
@@ -21,10 +20,29 @@ import com.example.tempernova.MainActivity
 import com.example.tempernova.R
 import com.example.tempernova.adapters.BTLEDeviceListAdapter
 import com.example.tempernova.ui.bluetooth.BluetoothDeviceListFragment
-
+import java.nio.charset.Charset
 import java.util.*
 
 private const val SCAN_PERIOD: Long = 10000
+
+
+//class BluetoothConnectedListner {  // from https://guides.codepath.com/android/Creating-Custom-Listeners
+//    var listener: OnBluetoothConnectedListener? = null
+//
+//    fun OnBluetoothConnectedLister()
+//    {
+//        this.listener = null
+//    }
+//
+//    fun setOnBluetoothConnectedListner(onBluetoothConnectedListener: OnBluetoothConnectedListener) {
+//        this.listener = onBluetoothConnectedListener
+//    }
+//
+//    interface OnBluetoothConnectedListener {
+//
+//        fun onBluetoothConnected()
+//    }
+//}
 
 class Bluetooth {
     var bluetoothHeadset: BluetoothHeadset? = null
@@ -37,14 +55,17 @@ class Bluetooth {
     private var bluetoothDevices: MutableList<BluetoothDevice> = mutableListOf()
     private var deviceList: MutableList<BluetoothDevice> = mutableListOf()
     private lateinit var connectedDevice: BluetoothGatt
+    private lateinit var gattServices: List<BluetoothGattService>
 
-    private val commandQueue: Queue<Runnable>? = null
+    private var commandQueue: Queue<Runnable>? = null
     private var commandQueueBusy = false
     private var mScanning: Boolean = false
     private var nrTries: Int = 0
     private var isRetrying: Boolean = false
     private val MAX_TRIES: Int = 3
     private var bleHandler = Handler()
+
+    private lateinit var appContext: Context
 
     enum class BluetoothStates {
         UNAVAILABLE, OFF, ON, CONNECTED
@@ -86,7 +107,7 @@ class Bluetooth {
         bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HEADSET, bluetoothHeadset)
 
         bluetoothDeviceListAdapter = BTLEDeviceListAdapter(bluetoothDevices, BluetoothDeviceListFragment())
-
+        appContext = context
         return BluetoothStates.ON
     }
 
@@ -144,8 +165,8 @@ class Bluetooth {
             return
         }
         // Execute the next command in the queue
-        if (commandQueue!!.size > 0) {
-            val bluetoothCommand = commandQueue.peek()
+        if (commandQueue!!.size() > 0) {
+            val bluetoothCommand = commandQueue!!.peek() as Runnable
             commandQueueBusy = true
             nrTries = 0
             bleHandler.post(Runnable {
@@ -171,7 +192,7 @@ class Bluetooth {
         if (currentCommand != null) {
             if (nrTries >= MAX_TRIES) { // Max retries reached, give up on this one and proceed
                 Log.v(TAG, "Max number of tries reached")
-                commandQueue.poll()
+                commandQueue!!.dequeue()
             } else {
                 isRetrying = true
             }
@@ -227,6 +248,9 @@ class Bluetooth {
         return result
     }
 
+    private fun waitAndGetServices() {
+        bluetoothGatt.discoverServices()
+    }
 
     private fun connect(context: Context, device: BluetoothDevice) {
         val gatt = device.connectGatt(context, false, bleGattCallback, TRANSPORT_LE)
@@ -234,8 +258,12 @@ class Bluetooth {
 
         Log.d(TAG, "SUCCESS: Connected to ${device.name} (${device.address})")
         (context as MainActivity).bluetoothStatus = BluetoothStates.CONNECTED
+        appContext = context
 
-        context.setResult(R.integer.bluetooth_device_conntected_code)
+        Handler().postDelayed({ waitAndGetServices() }, 500)    // wait for ~.25 seconds...
+
+//        context.setResult(R.integer.bluetooth_device_conntected_code)
+//        addBluetoothConnectedListener(null as BluetoothConnectedListenerstener)
     }
 
     fun connectToDevice(context: Context, device: BluetoothDevice) {
@@ -278,6 +306,18 @@ class Bluetooth {
                 return
             }
 
+            val value = characteristic!!.value.toString(Charset.defaultCharset())
+
+            Log.d("BLUETOOTH", "Got a BLE Characteristic!  -> ${characteristic!!.uuid} - $value")
+
+            if (value.isNotEmpty() && value.contains("TEMP:")) {
+                val data = value.substring(5).split(',')
+
+                if (appContext !== null) {
+                    (appContext as MainActivity).currTemp = data[0].trim().toInt()
+                    (appContext as MainActivity).updateTemp((appContext as MainActivity).findViewById(R.id.nav_host_fragment))
+                }
+            }
             // Characteristic has been read so processes it
             // ...
             // We done, complete the command
@@ -306,12 +346,34 @@ class Bluetooth {
 //            Log.d("onCharacteristicChanged", byteArrToHex(characteristic.value))
 //            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic)
         }
+
+        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+            super.onServicesDiscovered(gatt, status)
+
+//            if (status == BluetoothGatt.) {
+//                Log.e(TAG, "Service discovery failed");
+//                disconnect();
+//                return;
+//            }
+
+            gattServices = gatt!!.services
+            Log.d(TAG, "Bluetooth GATT Services Found: ${gattServices.size}")
+
+            commandQueue = Queue(mutableListOf<Runnable>())
+            gattServices.forEach { service ->
+                Log.d(TAG, "Bluetooth GATT Service Found: ${service.characteristics} - ${service.uuid}")
+                service.characteristics.forEach {
+                    readCharacteristic(it, gatt)
+                }
+            }
+
+        }
     }
 
     private fun completedCommand() {
         commandQueueBusy = false
         isRetrying = false
-        commandQueue!!.poll()
+        commandQueue!!.dequeue()
         nextCommand()
     }
 
@@ -328,7 +390,7 @@ class Bluetooth {
             val device = result.device
             Log.d("BLUETOOTH", "Device found: " + device.name + ", " + device.type + ", " + device.address)
 
-            if (!deviceList.contains(device)) {
+            if (!deviceList.contains(device) && device.name !== null) { // do we want to only show devices with a name?
                 deviceList.add(device)
             }
             // ...do whatever you want with this found device

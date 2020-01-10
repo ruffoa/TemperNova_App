@@ -2,31 +2,31 @@ package com.example.tempernova
 
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
-import android.view.View
-import android.widget.Button
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.drawable.TransitionDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
-import android.view.MenuItem
-import androidx.navigation.fragment.NavHostFragment
-import com.example.tempernova.helpers.RepeatListener
-import com.example.tempernova.helpers.Bluetooth
-import com.example.tempernova.helpers.LocationHelper
+import android.graphics.drawable.TransitionDrawable
+import android.os.Bundle
+import android.util.Log
 import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.DialogFragment
+import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.setupActionBarWithNavController
+import androidx.navigation.ui.setupWithNavController
 import com.example.tempernova.components.SimpleDialogComponent
-import kotlinx.android.synthetic.main.fragment_home.*
+import com.example.tempernova.helpers.Bluetooth
+import com.example.tempernova.helpers.LocationHelper
+import com.example.tempernova.helpers.RepeatListener
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogListener {
     var temperature: Int = 68
@@ -40,6 +40,7 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
     var bluetoothStatus: Bluetooth.BluetoothStates = Bluetooth.BluetoothStates.UNAVAILABLE
 
     lateinit var locationHelper: LocationHelper
+//    lateinit var mBluetoothConnectedListener: Bluetooth.BluetoothConnectedListner
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,6 +60,9 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
         mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
         temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
         bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
+//        mBluetoothConnectedListener = Bluetooth.BluetoothConnectedListner(onBluetoothConnectedLister = {
+//            Log.d("TAG", "Created the onBluetoothConnectedListener")
+//        })
 
         if (!::locationHelper.isInitialized) {
             locationHelper = LocationHelper()

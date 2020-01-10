@@ -205,4 +205,10 @@ class HomeFragment : Fragment() {
             displayBluetoothPairedBanner(this.view!!, "${deviceGatt.device.name} (${deviceGatt.device.address}) ${deviceGatt.device.bondState}", getString(R.string.action_message_okay))
         }
     }
+
+//    override fun onBluetoothConnected() {
+//        Log.d("BLUETOOTH PAIRING", "device is paired!  Beginning banner code")
+//        val deviceGatt = (this.activity as MainActivity).bluetoothClass.getConnectedDevice()
+//        displayBluetoothPairedBanner(this.view!!, "${deviceGatt.device.name} (${deviceGatt.device.address}) ${deviceGatt.device.bondState}", getString(R.string.action_message_okay))
+//    }
 }

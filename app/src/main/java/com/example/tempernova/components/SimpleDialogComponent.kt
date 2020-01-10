@@ -45,7 +45,7 @@ class SimpleDialogComponent: DialogFragment() {
     fun createDialog(view: View, dialogParent: ViewGroup, title: String, message: String, iconDrawable: Int, items: List<BluetoothDevice>): Dialog {
         var checkedItem: Int = 0
         val devList = bluetoothDeviceToStringList(items)
-        Log.d("TAG", "Bluetooth Devices ${devList.size} ${devList[0]}")
+        Log.d("TAG", "Bluetooth Devices ${devList.size}")
 
         return MaterialAlertDialogBuilder(view.context)
             // Add customization options here
