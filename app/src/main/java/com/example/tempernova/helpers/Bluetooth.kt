@@ -13,7 +13,6 @@ import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat.startActivityForResult
 import com.example.tempernova.MainActivity
@@ -37,6 +36,7 @@ class Bluetooth {
     private lateinit var connectedDevice: BluetoothGatt
     private lateinit var gattServices: List<BluetoothGattService>
     private var notifyingCharacteristics: MutableList<UUID> = mutableListOf()
+    private lateinit var notifyingGattCharacteristic: BluetoothGattCharacteristic
 
     private var commandQueue: Queue<Runnable>? = null
     private var commandQueueBusy = false
@@ -229,6 +229,43 @@ class Bluetooth {
         return result
     }
 
+    fun writeCharacteristic(characteristic: BluetoothGattCharacteristic, data: Int, writeType: Int = WRITE_TYPE_DEFAULT): Boolean {
+        // Check if this characteristic actually supports this writeType
+        val writeProperty: Int = when (writeType) {
+            WRITE_TYPE_DEFAULT -> PROPERTY_WRITE
+            WRITE_TYPE_NO_RESPONSE -> PROPERTY_WRITE_NO_RESPONSE
+            WRITE_TYPE_SIGNED -> PROPERTY_SIGNED_WRITE
+            else -> 0
+        }
+        if (characteristic.properties and writeProperty === 0) {
+            Log.e(
+                TAG,
+                java.lang.String.format(
+                    Locale.ENGLISH,
+                    "ERROR: Characteristic <%s> does not support writeType '%s'",
+                    characteristic.uuid,
+                    writeType
+                )
+            )
+            return false
+        }
+
+        val bytesToWrite: ByteArray = data.toString().toByteArray(Charset.defaultCharset())
+        characteristic.value = bytesToWrite
+        characteristic.writeType = writeType
+
+        if (!bluetoothGatt.writeCharacteristic(characteristic)) {
+            Log.e(TAG, String.format("ERROR: writeCharacteristic failed for characteristic: %s", characteristic.uuid))
+            completedCommand()
+        } else {
+            Log.d(TAG, String.format("writing <%s> to characteristic <%s>", bytesToWrite.toString(
+                Charset.defaultCharset()), characteristic.uuid))
+            nrTries++
+        }
+
+        return true
+    }
+
     fun setNotify(characteristic: BluetoothGattCharacteristic, enable: Boolean): Boolean {
         // Check if characteristic is valid
         if(characteristic == null) {
@@ -357,19 +394,11 @@ class Bluetooth {
     fun handleTempCharacteristic(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, setNotifications: Boolean = false) {
         val value = characteristic!!.value.toString(Charset.defaultCharset())
 
-        if (value.isNotEmpty() && value.contains("TEMP:")) {
-            val data = value.substring(5).split(',')
-
-            if (appContext !== null) {
-                (appContext as MainActivity).currTemp = data[0].trim().toInt()
-                (appContext as MainActivity).changeDisabledState(false)
-                (appContext as MainActivity).runOnUiThread {
-                    (appContext as MainActivity).updateTemp((appContext as MainActivity).findViewById(R.id.nav_host_fragment))
-                }
+        if (value.isNotEmpty() && value.toIntOrNull() !== null) {
+            if (!::notifyingGattCharacteristic.isInitialized) {
+                notifyingGattCharacteristic = characteristic
             }
 
-            setNotify(characteristic, true)
-        } else if (value.isNotEmpty() && value.toIntOrNull() !== null) {
             val temp = value.toInt()
 
             if (appContext !== null) {
@@ -387,6 +416,14 @@ class Bluetooth {
             if (setNotifications) {
                 setNotify(characteristic, true)
             }
+        }
+    }
+
+    fun sendDesiredTemp(context: Context) {
+        if ((context as MainActivity).bluetoothStatus === BluetoothStates.CONNECTED && ::gattServices.isInitialized && gattServices.isNotEmpty() && ::notifyingGattCharacteristic.isInitialized) {
+            val temp = (context as MainActivity).temperature
+
+            writeCharacteristic(notifyingGattCharacteristic, temp)
         }
     }
 
@@ -475,6 +512,8 @@ class Bluetooth {
                         if (value[0] != Byte.MIN_VALUE) {
                             // Notify set to on, add it to the set of notifying characteristics
                             notifyingCharacteristics.add(parentCharacteristic.uuid)
+
+                            sendDesiredTemp(appContext) // send temp back -> this way the Arduino knows what the initial setting is...
                         }
                     } else {
                         // Notify was turned off, so remove it from the set of notifying characteristics

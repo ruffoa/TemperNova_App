@@ -123,22 +123,26 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
 
         tempUpButton.setOnClickListener {
             temperature++
+            bluetoothClass.sendDesiredTemp(view.context)
             updateTemp(view)
         }
 
         tempUpButton.setOnTouchListener(RepeatListener(400, 100, {
             temperature++
+            bluetoothClass.sendDesiredTemp(view.context)
             updateTemp(view)
         }))
 
         /** Called when the user touches the "-" button */
         tempDownButton.setOnClickListener {
             temperature--
+            bluetoothClass.sendDesiredTemp(view.context)
             updateTemp(view)
         }
 
         tempDownButton.setOnTouchListener(RepeatListener(400, 100, {
             temperature--
+            bluetoothClass.sendDesiredTemp(view.context)
             updateTemp(view)
         }))
     }
