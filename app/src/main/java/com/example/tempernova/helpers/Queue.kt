@@ -15,10 +15,10 @@ class Queue<T>(list:MutableList<T>){
     }
 
     fun dequeue():Any?{
-        if (this.isEmpty()){
-            return null
+        return if (this.isEmpty()){
+            null
         } else {
-            return items.removeAt(0)
+            items.removeAt(0)
         }
     }
 

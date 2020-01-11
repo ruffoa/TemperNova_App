@@ -29,9 +29,7 @@ private const val CCC_DESCRIPTOR_UUID = "00002902-0000-1000-8000-00805f9b34fb"
 class Bluetooth {
     var bluetoothHeadset: BluetoothHeadset? = null
     // Get the default adapter
-    val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()  // code from https://github.com/gabrielseibel1/BLEHeater/blob/master/app/src/main/java/br/com/embs/bleheater/utils/BLEHelper.kt
-//    val leDeviceListAdapter: LeDeviceListAdapter = null // this is annoying :(
-    private val handler: Handler = Handler(Looper.getMainLooper())
+    private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()  // code from https://github.com/gabrielseibel1/BLEHeater/blob/master/app/src/main/java/br/com/embs/bleheater/utils/BLEHelper.kt
     private lateinit var bluetoothDeviceListAdapter: BTLEDeviceListAdapter
     private lateinit var bluetoothGatt: BluetoothGatt
     private var bluetoothDevices: MutableList<BluetoothDevice> = mutableListOf()
@@ -42,7 +40,6 @@ class Bluetooth {
 
     private var commandQueue: Queue<Runnable>? = null
     private var commandQueueBusy = false
-    private var mScanning: Boolean = false
     private var nrTries: Int = 0
     private var isRetrying: Boolean = false
     private val MAX_TRIES: Int = 3
@@ -219,6 +216,7 @@ class Bluetooth {
                     )
                 )
                 nrTries++
+//                retryCommand()
             }
         })
 
@@ -243,7 +241,7 @@ class Bluetooth {
 
         if(descriptor == null) {
             Log.e(TAG, String.format("ERROR: Could not get CCC descriptor for characteristic %s", characteristic.getUuid()))
-            return false;
+            return false
         }
 
         // Check if characteristic has NOTIFY or INDICATE properties and set the correct byte value to be written
@@ -252,6 +250,7 @@ class Bluetooth {
         val properties: Int = characteristic.properties
 
         value = if (properties !== null && PROPERTY_NOTIFY > 0) {
+            Log.d(TAG, "Enabling notifications on ${characteristic.descriptors} ${characteristic.value.toString(Charset.defaultCharset())}")
             BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
         } else if (properties !== null && PROPERTY_INDICATE > 0) {
             BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
@@ -270,22 +269,40 @@ class Bluetooth {
 
         // Queue Runnable to turn on/off the notification now that all checks have been passed
         val result = commandQueue!!.add(Runnable {
-            @Override
-            fun run() {
-                // First set notification for Gatt object  if(!bluetoothGatt.setCharacteristicNotification(descriptor.getCharacteristic(), enable)) {
-                Log.e(TAG, String.format("ERROR: setCharacteristicNotification failed for descriptor: %s", descriptor.getUuid()));
-            }
+                // First set notification for Gatt object
+                if (!bluetoothGatt.setCharacteristicNotification(
+                        descriptor.characteristic,
+                        enable
+                    )
+                ) {
+                    Log.e(
+                        TAG,
+                        String.format(
+                            "ERROR: setCharacteristicNotification failed for descriptor: %s",
+                            descriptor.uuid
+                        )
+                    )
+                }
 
-            // Then write to descriptor
-            descriptor.setValue(finalValue)
-            var result: Boolean = bluetoothGatt.writeDescriptor(descriptor)
+                // Then write to descriptor
+                descriptor.value = finalValue
+                var result: Boolean = bluetoothGatt.writeDescriptor(descriptor)
 
-            if(!result) {
-                Log.e(TAG, String.format("ERROR: writeDescriptor failed for descriptor: %s", descriptor.getUuid()));
-                completedCommand()
-            } else {
-                nrTries++
-            }
+                Log.d(TAG, "Calling Runnable func for the descriptor ${descriptor.characteristic} - ${descriptor.value.toString(
+                    Charset.defaultCharset())}")
+                if (!result) {
+                    Log.e(
+                        TAG,
+                        String.format(
+                            "ERROR: writeDescriptor failed for descriptor: %s",
+                            descriptor.uuid
+                        )
+                    )
+                    completedCommand()
+                } else {
+                    nrTries++
+//                    retryCommand()
+                }
         })
 
         if(result) {
@@ -318,10 +335,6 @@ class Bluetooth {
     }
 
     fun connectToDevice(context: Context, device: BluetoothDevice) {
-        //connectGatt(Context context, boolean autoConnect,
-        //        BluetoothGattCallback callback)
-        //        connectedDevice = device.connectGatt(context, true, bluetoothGattCallback, TRANSPORT_LE)
-
         // Get device object for a mac address
         val device = bluetoothAdapter!!.getRemoteDevice(device.address)
         // Check if the peripheral is cached or not
@@ -341,6 +354,42 @@ class Bluetooth {
         }
     }
 
+    fun handleTempCharacteristic(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, setNotifications: Boolean = false) {
+        val value = characteristic!!.value.toString(Charset.defaultCharset())
+
+        if (value.isNotEmpty() && value.contains("TEMP:")) {
+            val data = value.substring(5).split(',')
+
+            if (appContext !== null) {
+                (appContext as MainActivity).currTemp = data[0].trim().toInt()
+                (appContext as MainActivity).changeDisabledState(false)
+                (appContext as MainActivity).runOnUiThread {
+                    (appContext as MainActivity).updateTemp((appContext as MainActivity).findViewById(R.id.nav_host_fragment))
+                }
+            }
+
+            setNotify(characteristic, true)
+        } else if (value.isNotEmpty() && value.toIntOrNull() !== null) {
+            val temp = value.toInt()
+
+            if (appContext !== null) {
+                (appContext as MainActivity).currTemp = temp
+                (appContext as MainActivity).changeDisabledState(false)
+                (appContext as MainActivity).runOnUiThread {
+                    (appContext as MainActivity).updateTemp(
+                        (appContext as MainActivity).findViewById(
+                            R.id.nav_host_fragment
+                        )
+                    )
+                }
+            }
+
+            if (setNotifications) {
+                setNotify(characteristic, true)
+            }
+        }
+    }
+
     private val bleGattCallback: BluetoothGattCallback = object : BluetoothGattCallback() {
         override fun onCharacteristicRead(
             gatt: BluetoothGatt?,
@@ -357,23 +406,7 @@ class Bluetooth {
                 return
             }
 
-            val value = characteristic!!.value.toString(Charset.defaultCharset())
-
-            Log.d("BLUETOOTH", "Got a BLE Characteristic!  -> ${characteristic.uuid} - $value")
-
-            if (value.isNotEmpty() && value.contains("TEMP:")) {
-                val data = value.substring(5).split(',')
-
-                if (appContext !== null) {
-                    (appContext as MainActivity).currTemp = data[0].trim().toInt()
-                    (appContext as MainActivity).changeDisabledState(false)
-                    (appContext as MainActivity).runOnUiThread {
-                        (appContext as MainActivity).updateTemp((appContext as MainActivity).findViewById(R.id.nav_host_fragment))
-                    }
-                }
-
-                setNotify(characteristic, true)
-            }
+            handleTempCharacteristic(gatt!!, characteristic!!, true)
             // Characteristic has been read so processes it
             // ...
             // We done, complete the command
@@ -398,19 +431,15 @@ class Bluetooth {
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
+            Log.d(TAG,"onCharacteristicChanged - $characteristic - ${characteristic.value.toString(Charset.defaultCharset())}")
+            handleTempCharacteristic(gatt, characteristic)
+
             super.onCharacteristicChanged(gatt, characteristic)
-//            Log.d("onCharacteristicChanged", byteArrToHex(characteristic.value))
 //            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic)
         }
 
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             super.onServicesDiscovered(gatt, status)
-
-//            if (status == BluetoothGatt.) {
-//                Log.e(TAG, "Service discovery failed");
-//                disconnect();
-//                return;
-//            }
 
             gattServices = gatt!!.services
             Log.d(TAG, "Bluetooth GATT Services Found: ${gattServices.size}")
@@ -454,6 +483,8 @@ class Bluetooth {
                 }
 
                 // This was a setNotify operation
+                Log.d(TAG, "onDescriptorWrite called - ${descriptor.characteristic} - ${descriptor.value.toString(
+                    Charset.defaultCharset())}")
 
             } else {
                 // This was a normal descriptor write....
