@@ -393,26 +393,8 @@ class Bluetooth {
 
     fun handleTempCharacteristic(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, setNotifications: Boolean = false) {
         val value = characteristic!!.value.toString(Charset.defaultCharset())
-        var isDisabled: Boolean? = null
 
-        if (value.isNotEmpty() && value.contains("TEMP:")) {
-            val data = value.substring(5).split(',')
-
-            if (appContext !== null) {
-                (appContext as MainActivity).currTemp = data[0].trim().toInt()
-                isDisabled = (appContext as MainActivity).isDisabled
-                (appContext as MainActivity).changeDisabledState(false)
-                (appContext as MainActivity).runOnUiThread {
-                    (appContext as MainActivity).updateTemp((appContext as MainActivity).findViewById(R.id.nav_host_fragment))
-                }
-            }
-
-            setNotify(characteristic, true)
-
-            if (isDisabled !== null && isDisabled == true) {
-                sendDesiredTemp(appContext)
-            }
-        } else if (value.isNotEmpty() && value.toIntOrNull() !== null) {
+        if (value.isNotEmpty() && value.toIntOrNull() !== null) {
             if (!::notifyingGattCharacteristic.isInitialized) {
                 notifyingGattCharacteristic = characteristic
             }
@@ -421,7 +403,6 @@ class Bluetooth {
 
             if (appContext !== null) {
                 (appContext as MainActivity).currTemp = temp
-                isDisabled = (appContext as MainActivity).isDisabled
                 (appContext as MainActivity).changeDisabledState(false)
                 (appContext as MainActivity).runOnUiThread {
                     (appContext as MainActivity).updateTemp(
@@ -434,10 +415,6 @@ class Bluetooth {
 
             if (setNotifications) {
                 setNotify(characteristic, true)
-
-                if (isDisabled !== null && isDisabled == true) {
-                    sendDesiredTemp(appContext)
-                }
             }
         }
     }
@@ -535,6 +512,8 @@ class Bluetooth {
                         if (value[0] != Byte.MIN_VALUE) {
                             // Notify set to on, add it to the set of notifying characteristics
                             notifyingCharacteristics.add(parentCharacteristic.uuid)
+
+                            sendDesiredTemp(appContext) // send temp back -> this way the Arduino knows what the initial setting is...
                         }
                     } else {
                         // Notify was turned off, so remove it from the set of notifying characteristics
