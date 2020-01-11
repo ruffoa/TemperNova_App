@@ -9,6 +9,7 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.TransitionDrawable
 import android.os.Bundle
+import android.text.Html
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -22,15 +23,18 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import com.example.tempernova.components.BannerComponent
 import com.example.tempernova.components.SimpleDialogComponent
 import com.example.tempernova.helpers.Bluetooth
 import com.example.tempernova.helpers.LocationHelper
 import com.example.tempernova.helpers.RepeatListener
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.sergivonavi.materialbanner.Banner
+import com.sergivonavi.materialbanner.BannerInterface
 
 class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogListener {
     var temperature: Int = 68
-    var currTemp: Int = 69
+    var currTemp: Int? = null
     var isDisabled: Boolean = false
 
     var transitiondrawable: Drawable? = null
@@ -40,7 +44,9 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
     var bluetoothStatus: Bluetooth.BluetoothStates = Bluetooth.BluetoothStates.UNAVAILABLE
 
     lateinit var locationHelper: LocationHelper
-//    lateinit var mBluetoothConnectedListener: Bluetooth.BluetoothConnectedListner
+
+    private val bannerClass = BannerComponent()
+    private lateinit var banner: Banner
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,9 +66,6 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
         mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
         temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
         bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
-//        mBluetoothConnectedListener = Bluetooth.BluetoothConnectedListner(onBluetoothConnectedLister = {
-//            Log.d("TAG", "Created the onBluetoothConnectedListener")
-//        })
 
         if (!::locationHelper.isInitialized) {
             locationHelper = LocationHelper()
@@ -140,18 +143,27 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
         }))
     }
 
+    fun changeDisabledState(disabled: Boolean) {
+        isDisabled = disabled
+    }
+
     fun updateTemp(view: View) {
         val tempDisplayButton: Button = view.findViewById(R.id.tempDisplayButton)
         val tempDownButton: Button = view.findViewById(R.id.tempDownButton)
         val tempUpButton: Button = view.findViewById(R.id.tempUpButton)
 
-        tempDisplayButton.text = temperature.toString() + getString(R.string.temperature_celcius_unit_string)
+        if (bluetoothStatus == Bluetooth.BluetoothStates.CONNECTED && currTemp !== null) {
+            tempDisplayButton.text = Html.fromHtml("<b><big>" +  temperature.toString() + getString(R.string.temperature_celcius_unit_string) + "</big></b>" +  "<br />" +
+                    "<small>" +  currTemp.toString() + getString(R.string.temperature_celcius_unit_string) + "</small>" + "<br />")
+        } else {
+            tempDisplayButton.text = temperature.toString() + getString(R.string.temperature_celcius_unit_string)
+        }
 
         when {
             isDisabled -> {
                 tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.material_on_surface_disabled))
             }
-            temperature > currTemp -> {
+            currTemp !== null && temperature > currTemp!! -> {
                 val BackGroundColor = arrayOf(
                     ColorDrawable(Color.parseColor("#ff0000")),
                     ColorDrawable(Color.parseColor("#56ff00"))
@@ -162,11 +174,14 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
     //            tempDisplayButton.background = transitiondrawable // broken, so disabled for now...
                 tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorPrimaryDark))
             }
-            temperature === currTemp -> {
+            currTemp !== null && temperature == currTemp -> {
                 tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorTempDoneHex))
             }
-            else -> {
+            currTemp !== null && temperature <= currTemp!! -> {
                 tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorTempCooling))
+            }
+            else -> {
+                tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.material_on_surface_disabled))
             }
         }
 
@@ -240,6 +255,14 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
             // Invoke the superclass to handle it.
             super.onOptionsItemSelected(item)
         }
+    }
+
+    fun displayBluetoothPairedBanner(view: View, msg: String) {
+        banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, null, R.drawable.logo_round, BannerInterface.OnClickListener {
+            it.dismiss()
+        })
+
+        banner.show()
     }
 
 

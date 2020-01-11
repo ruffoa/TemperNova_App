@@ -24,6 +24,7 @@
     <!--    Generic Action Messages -->
     <string name="action_message_okay">OK</string>
     <string name="action_message_yes">Yes</string>
+    <string name="action_message_dismiss">Dismiss</string>
 
     <string name="action_settings">Settings</string>
     <string name="action_about">About</string>

@@ -4,7 +4,7 @@ import android.app.Activity
 import android.bluetooth.*
 import android.bluetooth.BluetoothDevice.TRANSPORT_LE
 import android.bluetooth.BluetoothGatt.GATT_SUCCESS
-import android.bluetooth.BluetoothGattCharacteristic.PROPERTY_READ
+import android.bluetooth.BluetoothGattCharacteristic.*
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
@@ -24,25 +24,7 @@ import java.nio.charset.Charset
 import java.util.*
 
 private const val SCAN_PERIOD: Long = 10000
-
-
-//class BluetoothConnectedListner {  // from https://guides.codepath.com/android/Creating-Custom-Listeners
-//    var listener: OnBluetoothConnectedListener? = null
-//
-//    fun OnBluetoothConnectedLister()
-//    {
-//        this.listener = null
-//    }
-//
-//    fun setOnBluetoothConnectedListner(onBluetoothConnectedListener: OnBluetoothConnectedListener) {
-//        this.listener = onBluetoothConnectedListener
-//    }
-//
-//    interface OnBluetoothConnectedListener {
-//
-//        fun onBluetoothConnected()
-//    }
-//}
+private const val CCC_DESCRIPTOR_UUID = "00002902-0000-1000-8000-00805f9b34fb"
 
 class Bluetooth {
     var bluetoothHeadset: BluetoothHeadset? = null
@@ -56,6 +38,7 @@ class Bluetooth {
     private var deviceList: MutableList<BluetoothDevice> = mutableListOf()
     private lateinit var connectedDevice: BluetoothGatt
     private lateinit var gattServices: List<BluetoothGattService>
+    private var notifyingCharacteristics: MutableList<UUID> = mutableListOf()
 
     private var commandQueue: Queue<Runnable>? = null
     private var commandQueueBusy = false
@@ -248,6 +231,73 @@ class Bluetooth {
         return result
     }
 
+    fun setNotify(characteristic: BluetoothGattCharacteristic, enable: Boolean): Boolean {
+        // Check if characteristic is valid
+        if(characteristic == null) {
+            Log.e(TAG, "ERROR: Characteristic is 'null', ignoring setNotify request")
+            return false
+        }
+
+        // Get the CCC Descriptor for the characteristic
+        val descriptor: BluetoothGattDescriptor = characteristic.getDescriptor(UUID.fromString(CCC_DESCRIPTOR_UUID))
+
+        if(descriptor == null) {
+            Log.e(TAG, String.format("ERROR: Could not get CCC descriptor for characteristic %s", characteristic.getUuid()))
+            return false;
+        }
+
+        // Check if characteristic has NOTIFY or INDICATE properties and set the correct byte value to be written
+        var value: ByteArray
+
+        val properties: Int = characteristic.properties
+
+        value = if (properties !== null && PROPERTY_NOTIFY > 0) {
+            BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+        } else if (properties !== null && PROPERTY_INDICATE > 0) {
+            BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
+        } else {
+            Log.e(TAG, String.format("ERROR: Characteristic %s does not have notify or indicate property", characteristic.getUuid()))
+            return false
+        }
+
+        lateinit var finalValue: ByteArray
+
+        finalValue = if (enable) {
+            value
+        } else {
+            BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+        }
+
+        // Queue Runnable to turn on/off the notification now that all checks have been passed
+        val result = commandQueue!!.add(Runnable {
+            @Override
+            fun run() {
+                // First set notification for Gatt object  if(!bluetoothGatt.setCharacteristicNotification(descriptor.getCharacteristic(), enable)) {
+                Log.e(TAG, String.format("ERROR: setCharacteristicNotification failed for descriptor: %s", descriptor.getUuid()));
+            }
+
+            // Then write to descriptor
+            descriptor.setValue(finalValue)
+            var result: Boolean = bluetoothGatt.writeDescriptor(descriptor)
+
+            if(!result) {
+                Log.e(TAG, String.format("ERROR: writeDescriptor failed for descriptor: %s", descriptor.getUuid()));
+                completedCommand()
+            } else {
+                nrTries++
+            }
+        })
+
+        if(result) {
+            nextCommand()
+        } else {
+            Log.e(TAG, "ERROR: Could not enqueue write command");
+        }
+
+        return result
+    }
+
+
     private fun waitAndGetServices() {
         bluetoothGatt.discoverServices()
     }
@@ -261,9 +311,10 @@ class Bluetooth {
         appContext = context
 
         Handler().postDelayed({ waitAndGetServices() }, 500)    // wait for ~.25 seconds...
-
-//        context.setResult(R.integer.bluetooth_device_conntected_code)
-//        addBluetoothConnectedListener(null as BluetoothConnectedListenerstener)
+        context.displayBluetoothPairedBanner(
+            context.findViewById(R.id.nav_host_fragment),
+            "${device.name} (${device.address}) connected"
+        )
     }
 
     fun connectToDevice(context: Context, device: BluetoothDevice) {
@@ -308,15 +359,20 @@ class Bluetooth {
 
             val value = characteristic!!.value.toString(Charset.defaultCharset())
 
-            Log.d("BLUETOOTH", "Got a BLE Characteristic!  -> ${characteristic!!.uuid} - $value")
+            Log.d("BLUETOOTH", "Got a BLE Characteristic!  -> ${characteristic.uuid} - $value")
 
             if (value.isNotEmpty() && value.contains("TEMP:")) {
                 val data = value.substring(5).split(',')
 
                 if (appContext !== null) {
                     (appContext as MainActivity).currTemp = data[0].trim().toInt()
-                    (appContext as MainActivity).updateTemp((appContext as MainActivity).findViewById(R.id.nav_host_fragment))
+                    (appContext as MainActivity).changeDisabledState(false)
+                    (appContext as MainActivity).runOnUiThread {
+                        (appContext as MainActivity).updateTemp((appContext as MainActivity).findViewById(R.id.nav_host_fragment))
+                    }
                 }
+
+                setNotify(characteristic, true)
             }
             // Characteristic has been read so processes it
             // ...
@@ -368,6 +424,45 @@ class Bluetooth {
             }
 
         }
+
+        override fun onDescriptorWrite(
+            gatt: BluetoothGatt,
+            descriptor: BluetoothGattDescriptor,
+            status: Int
+        ) {
+            // Do some checks first
+            val parentCharacteristic: BluetoothGattCharacteristic = descriptor.characteristic
+            if (status != GATT_SUCCESS) {
+                Log.e(TAG, String.format("ERROR: Write descriptor failed -> characteristic: %s", parentCharacteristic.uuid))
+            }
+
+            // Check if this was the Client Configuration Descriptor
+            if (descriptor.uuid == UUID.fromString(CCC_DESCRIPTOR_UUID)) {
+                if (status == GATT_SUCCESS) {
+                    // Check if we were turning notify on or off
+                    val value: ByteArray = descriptor.value
+
+                    if (value != null) {
+                        if (value[0] != Byte.MIN_VALUE) {
+                            // Notify set to on, add it to the set of notifying characteristics
+                            notifyingCharacteristics.add(parentCharacteristic.uuid)
+                        }
+                    } else {
+                        // Notify was turned off, so remove it from the set of notifying characteristics
+                        notifyingCharacteristics.remove(parentCharacteristic.uuid)
+                    }
+                }
+
+                // This was a setNotify operation
+
+            } else {
+                // This was a normal descriptor write....
+                super.onDescriptorWrite(gatt, descriptor, status)
+            }
+
+            completedCommand()
+        }
+
     }
 
     private fun completedCommand() {
