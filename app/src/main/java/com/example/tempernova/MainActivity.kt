@@ -1,35 +1,40 @@
 package com.example.tempernova
 
-import android.bluetooth.BluetoothAdapter
 import android.content.Context
 import android.content.Intent
-import android.os.Bundle
-import android.view.View
-import android.widget.Button
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
 import android.content.SharedPreferences
 import android.content.res.ColorStateList
 import android.graphics.Color
-import android.graphics.drawable.TransitionDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.TransitionDrawable
+import android.os.Bundle
+import android.text.Html
+import android.util.Log
+import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.fragment.app.DialogFragment
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
-import com.example.tempernova.helpers.RepeatListener
+import androidx.navigation.ui.AppBarConfiguration
+import androidx.navigation.ui.setupActionBarWithNavController
+import androidx.navigation.ui.setupWithNavController
+import com.example.tempernova.components.BannerComponent
+import com.example.tempernova.components.SimpleDialogComponent
 import com.example.tempernova.helpers.Bluetooth
 import com.example.tempernova.helpers.LocationHelper
-import android.view.Menu
-import androidx.core.app.ActivityCompat
-import kotlinx.android.synthetic.main.fragment_home.*
+import com.example.tempernova.helpers.RepeatListener
+import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.sergivonavi.materialbanner.Banner
+import com.sergivonavi.materialbanner.BannerInterface
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogListener {
     var temperature: Int = 68
-    var currTemp: Int = 69
+    var currTemp: Int? = null
     var isDisabled: Boolean = false
 
     var transitiondrawable: Drawable? = null
@@ -39,6 +44,9 @@ class MainActivity : AppCompatActivity() {
     var bluetoothStatus: Bluetooth.BluetoothStates = Bluetooth.BluetoothStates.UNAVAILABLE
 
     lateinit var locationHelper: LocationHelper
+
+    private val bannerClass = BannerComponent()
+    private lateinit var banner: Banner
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -135,18 +143,27 @@ class MainActivity : AppCompatActivity() {
         }))
     }
 
+    fun changeDisabledState(disabled: Boolean) {
+        isDisabled = disabled
+    }
+
     fun updateTemp(view: View) {
         val tempDisplayButton: Button = view.findViewById(R.id.tempDisplayButton)
         val tempDownButton: Button = view.findViewById(R.id.tempDownButton)
         val tempUpButton: Button = view.findViewById(R.id.tempUpButton)
 
-        tempDisplayButton.text = temperature.toString() + getString(R.string.temperature_celcius_unit_string)
+        if (bluetoothStatus == Bluetooth.BluetoothStates.CONNECTED && currTemp !== null) {
+            tempDisplayButton.text = Html.fromHtml("<b><big>" +  temperature.toString() + getString(R.string.temperature_celcius_unit_string) + "</big></b>" +  "<br />" +
+                    "<small>" +  currTemp.toString() + getString(R.string.temperature_celcius_unit_string) + "</small>" + "<br />")
+        } else {
+            tempDisplayButton.text = temperature.toString() + getString(R.string.temperature_celcius_unit_string)
+        }
 
         when {
             isDisabled -> {
                 tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.material_on_surface_disabled))
             }
-            temperature > currTemp -> {
+            currTemp !== null && temperature > currTemp!! -> {
                 val BackGroundColor = arrayOf(
                     ColorDrawable(Color.parseColor("#ff0000")),
                     ColorDrawable(Color.parseColor("#56ff00"))
@@ -157,11 +174,14 @@ class MainActivity : AppCompatActivity() {
     //            tempDisplayButton.background = transitiondrawable // broken, so disabled for now...
                 tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorPrimaryDark))
             }
-            temperature === currTemp -> {
+            currTemp !== null && temperature == currTemp -> {
                 tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorTempDoneHex))
             }
-            else -> {
+            currTemp !== null && temperature <= currTemp!! -> {
                 tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorTempCooling))
+            }
+            else -> {
+                tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.material_on_surface_disabled))
             }
         }
 
@@ -235,5 +255,22 @@ class MainActivity : AppCompatActivity() {
             // Invoke the superclass to handle it.
             super.onOptionsItemSelected(item)
         }
+    }
+
+    fun displayBluetoothPairedBanner(view: View, msg: String) {
+        banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, null, R.drawable.logo_round, BannerInterface.OnClickListener {
+            it.dismiss()
+        })
+
+        banner.show()
+    }
+
+
+    override fun onDialogPositiveClick(dialog: DialogFragment) {
+
+    }
+
+    override fun onDialogNegativeClick(dialog: DialogFragment) {
+        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
     }
 }

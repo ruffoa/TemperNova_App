@@ -4,7 +4,7 @@ import android.app.Activity
 import android.bluetooth.*
 import android.bluetooth.BluetoothDevice.TRANSPORT_LE
 import android.bluetooth.BluetoothGatt.GATT_SUCCESS
-import android.bluetooth.BluetoothGattCharacteristic.PROPERTY_READ
+import android.bluetooth.BluetoothGattCharacteristic.*
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
@@ -16,32 +16,36 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.ActivityCompat.startActivityForResult
+import com.example.tempernova.MainActivity
 import com.example.tempernova.R
 import com.example.tempernova.adapters.BTLEDeviceListAdapter
 import com.example.tempernova.ui.bluetooth.BluetoothDeviceListFragment
+import java.nio.charset.Charset
 import java.util.*
 
 private const val SCAN_PERIOD: Long = 10000
+private const val CCC_DESCRIPTOR_UUID = "00002902-0000-1000-8000-00805f9b34fb"
 
 class Bluetooth {
     var bluetoothHeadset: BluetoothHeadset? = null
     // Get the default adapter
-    val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()  // code from https://github.com/gabrielseibel1/BLEHeater/blob/master/app/src/main/java/br/com/embs/bleheater/utils/BLEHelper.kt
-//    val leDeviceListAdapter: LeDeviceListAdapter = null // this is annoying :(
-    private val handler: Handler = Handler(Looper.getMainLooper())
+    private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()  // code from https://github.com/gabrielseibel1/BLEHeater/blob/master/app/src/main/java/br/com/embs/bleheater/utils/BLEHelper.kt
     private lateinit var bluetoothDeviceListAdapter: BTLEDeviceListAdapter
     private lateinit var bluetoothGatt: BluetoothGatt
     private var bluetoothDevices: MutableList<BluetoothDevice> = mutableListOf()
     private var deviceList: MutableList<BluetoothDevice> = mutableListOf()
     private lateinit var connectedDevice: BluetoothGatt
+    private lateinit var gattServices: List<BluetoothGattService>
+    private var notifyingCharacteristics: MutableList<UUID> = mutableListOf()
 
-    private val commandQueue: Queue<Runnable>? = null
+    private var commandQueue: Queue<Runnable>? = null
     private var commandQueueBusy = false
-    private var mScanning: Boolean = false
     private var nrTries: Int = 0
     private var isRetrying: Boolean = false
     private val MAX_TRIES: Int = 3
     private var bleHandler = Handler()
+
+    private lateinit var appContext: Context
 
     enum class BluetoothStates {
         UNAVAILABLE, OFF, ON, CONNECTED
@@ -83,7 +87,7 @@ class Bluetooth {
         bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HEADSET, bluetoothHeadset)
 
         bluetoothDeviceListAdapter = BTLEDeviceListAdapter(bluetoothDevices, BluetoothDeviceListFragment())
-
+        appContext = context
         return BluetoothStates.ON
     }
 
@@ -94,7 +98,7 @@ class Bluetooth {
         }
     }
 
-    fun scanDevices(deleteStoredDevices: Boolean = false, specificDeviceToFind: BluetoothDevice? = null) { // from https://medium.com/@martijn.van.welie/making-android-ble-work-part-1-a736dcd53b02
+    fun scanDevices(deleteStoredDevices: Boolean = false, specificDeviceToFind: BluetoothDevice? = null, timeToScan: Long = 5000) { // from https://medium.com/@martijn.van.welie/making-android-ble-work-part-1-a736dcd53b02
         val scanner = bluetoothAdapter!!.bluetoothLeScanner
 
         val scanSettings = ScanSettings.Builder()
@@ -108,7 +112,7 @@ class Bluetooth {
             val filter = ScanFilter.Builder()
                 .setDeviceAddress(specificDeviceToFind.address)
                 .build()
-            scanFilters!!.add(filter)
+            scanFilters = mutableListOf(filter)
         }
 
         if (deleteStoredDevices)
@@ -116,7 +120,7 @@ class Bluetooth {
 
         if (scanner != null) {
             scanner.startScan(scanFilters, scanSettings, scanCallback) // get all devices for now, can choose to filter by name or mac addr later.
-            Handler().postDelayed({ scanner.stopScan(scanCallback) }, 5000)    // scan for 5 seconds...
+            Handler().postDelayed({ scanner.stopScan(scanCallback) }, timeToScan)    // scan for 5 seconds...
             Log.d("BLUETOOTH", "scan started")
         } else {
             Log.e("BLUETOOTH", "could not get scanner object")
@@ -141,8 +145,8 @@ class Bluetooth {
             return
         }
         // Execute the next command in the queue
-        if (commandQueue!!.size > 0) {
-            val bluetoothCommand = commandQueue.peek()
+        if (commandQueue!!.size() > 0) {
+            val bluetoothCommand = commandQueue!!.peek() as Runnable
             commandQueueBusy = true
             nrTries = 0
             bleHandler.post(Runnable {
@@ -168,7 +172,7 @@ class Bluetooth {
         if (currentCommand != null) {
             if (nrTries >= MAX_TRIES) { // Max retries reached, give up on this one and proceed
                 Log.v(TAG, "Max number of tries reached")
-                commandQueue.poll()
+                commandQueue!!.dequeue()
             } else {
                 isRetrying = true
             }
@@ -212,6 +216,7 @@ class Bluetooth {
                     )
                 )
                 nrTries++
+//                retryCommand()
             }
         })
 
@@ -224,17 +229,112 @@ class Bluetooth {
         return result
     }
 
+    fun setNotify(characteristic: BluetoothGattCharacteristic, enable: Boolean): Boolean {
+        // Check if characteristic is valid
+        if(characteristic == null) {
+            Log.e(TAG, "ERROR: Characteristic is 'null', ignoring setNotify request")
+            return false
+        }
+
+        // Get the CCC Descriptor for the characteristic
+        val descriptor: BluetoothGattDescriptor = characteristic.getDescriptor(UUID.fromString(CCC_DESCRIPTOR_UUID))
+
+        if(descriptor == null) {
+            Log.e(TAG, String.format("ERROR: Could not get CCC descriptor for characteristic %s", characteristic.getUuid()))
+            return false
+        }
+
+        // Check if characteristic has NOTIFY or INDICATE properties and set the correct byte value to be written
+        var value: ByteArray
+
+        val properties: Int = characteristic.properties
+
+        value = if (properties !== null && PROPERTY_NOTIFY > 0) {
+            Log.d(TAG, "Enabling notifications on ${characteristic.descriptors} ${characteristic.value.toString(Charset.defaultCharset())}")
+            BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+        } else if (properties !== null && PROPERTY_INDICATE > 0) {
+            BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
+        } else {
+            Log.e(TAG, String.format("ERROR: Characteristic %s does not have notify or indicate property", characteristic.getUuid()))
+            return false
+        }
+
+        lateinit var finalValue: ByteArray
+
+        finalValue = if (enable) {
+            value
+        } else {
+            BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE
+        }
+
+        // Queue Runnable to turn on/off the notification now that all checks have been passed
+        val result = commandQueue!!.add(Runnable {
+                // First set notification for Gatt object
+                if (!bluetoothGatt.setCharacteristicNotification(
+                        descriptor.characteristic,
+                        enable
+                    )
+                ) {
+                    Log.e(
+                        TAG,
+                        String.format(
+                            "ERROR: setCharacteristicNotification failed for descriptor: %s",
+                            descriptor.uuid
+                        )
+                    )
+                }
+
+                // Then write to descriptor
+                descriptor.value = finalValue
+                var result: Boolean = bluetoothGatt.writeDescriptor(descriptor)
+
+                Log.d(TAG, "Calling Runnable func for the descriptor ${descriptor.characteristic} - ${descriptor.value.toString(
+                    Charset.defaultCharset())}")
+                if (!result) {
+                    Log.e(
+                        TAG,
+                        String.format(
+                            "ERROR: writeDescriptor failed for descriptor: %s",
+                            descriptor.uuid
+                        )
+                    )
+                    completedCommand()
+                } else {
+                    nrTries++
+//                    retryCommand()
+                }
+        })
+
+        if(result) {
+            nextCommand()
+        } else {
+            Log.e(TAG, "ERROR: Could not enqueue write command");
+        }
+
+        return result
+    }
+
+
+    private fun waitAndGetServices() {
+        bluetoothGatt.discoverServices()
+    }
 
     private fun connect(context: Context, device: BluetoothDevice) {
         val gatt = device.connectGatt(context, false, bleGattCallback, TRANSPORT_LE)
         bluetoothGatt = gatt
+
+        Log.d(TAG, "SUCCESS: Connected to ${device.name} (${device.address})")
+        (context as MainActivity).bluetoothStatus = BluetoothStates.CONNECTED
+        appContext = context
+
+        Handler().postDelayed({ waitAndGetServices() }, 500)    // wait for ~.25 seconds...
+        context.displayBluetoothPairedBanner(
+            context.findViewById(R.id.nav_host_fragment),
+            "${device.name} (${device.address}) connected"
+        )
     }
 
     fun connectToDevice(context: Context, device: BluetoothDevice) {
-        //connectGatt(Context context, boolean autoConnect,
-        //        BluetoothGattCallback callback)
-        //        connectedDevice = device.connectGatt(context, true, bluetoothGattCallback, TRANSPORT_LE)
-
         // Get device object for a mac address
         val device = bluetoothAdapter!!.getRemoteDevice(device.address)
         // Check if the peripheral is cached or not
@@ -244,11 +344,49 @@ class Bluetooth {
             // The peripheral is not cached
             // we need to re-scan for it :(
 
-            scanDevices(false, device)
+            scanDevices(false, device, 500) // re-scan for ~.5 seconds to get the device info, then let's re-call this func again to try to connect!
+
+            Handler().postDelayed({ connect(context, device) }, 510)    // wait for ~.5 seconds...
         } else {
             // The peripheral is cached - we've already scanned for it!
             // lets call the connect function!
             connect(context, device)
+        }
+    }
+
+    fun handleTempCharacteristic(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, setNotifications: Boolean = false) {
+        val value = characteristic!!.value.toString(Charset.defaultCharset())
+
+        if (value.isNotEmpty() && value.contains("TEMP:")) {
+            val data = value.substring(5).split(',')
+
+            if (appContext !== null) {
+                (appContext as MainActivity).currTemp = data[0].trim().toInt()
+                (appContext as MainActivity).changeDisabledState(false)
+                (appContext as MainActivity).runOnUiThread {
+                    (appContext as MainActivity).updateTemp((appContext as MainActivity).findViewById(R.id.nav_host_fragment))
+                }
+            }
+
+            setNotify(characteristic, true)
+        } else if (value.isNotEmpty() && value.toIntOrNull() !== null) {
+            val temp = value.toInt()
+
+            if (appContext !== null) {
+                (appContext as MainActivity).currTemp = temp
+                (appContext as MainActivity).changeDisabledState(false)
+                (appContext as MainActivity).runOnUiThread {
+                    (appContext as MainActivity).updateTemp(
+                        (appContext as MainActivity).findViewById(
+                            R.id.nav_host_fragment
+                        )
+                    )
+                }
+            }
+
+            if (setNotifications) {
+                setNotify(characteristic, true)
+            }
         }
     }
 
@@ -268,6 +406,7 @@ class Bluetooth {
                 return
             }
 
+            handleTempCharacteristic(gatt!!, characteristic!!, true)
             // Characteristic has been read so processes it
             // ...
             // We done, complete the command
@@ -292,16 +431,75 @@ class Bluetooth {
             gatt: BluetoothGatt,
             characteristic: BluetoothGattCharacteristic
         ) {
+            Log.d(TAG,"onCharacteristicChanged - $characteristic - ${characteristic.value.toString(Charset.defaultCharset())}")
+            handleTempCharacteristic(gatt, characteristic)
+
             super.onCharacteristicChanged(gatt, characteristic)
-//            Log.d("onCharacteristicChanged", byteArrToHex(characteristic.value))
 //            broadcastUpdate(ACTION_DATA_AVAILABLE, characteristic)
         }
+
+        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+            super.onServicesDiscovered(gatt, status)
+
+            gattServices = gatt!!.services
+            Log.d(TAG, "Bluetooth GATT Services Found: ${gattServices.size}")
+
+            commandQueue = Queue(mutableListOf<Runnable>())
+            gattServices.forEach { service ->
+                Log.d(TAG, "Bluetooth GATT Service Found: ${service.characteristics} - ${service.uuid}")
+                service.characteristics.forEach {
+                    readCharacteristic(it, gatt)
+                }
+            }
+
+        }
+
+        override fun onDescriptorWrite(
+            gatt: BluetoothGatt,
+            descriptor: BluetoothGattDescriptor,
+            status: Int
+        ) {
+            // Do some checks first
+            val parentCharacteristic: BluetoothGattCharacteristic = descriptor.characteristic
+            if (status != GATT_SUCCESS) {
+                Log.e(TAG, String.format("ERROR: Write descriptor failed -> characteristic: %s", parentCharacteristic.uuid))
+            }
+
+            // Check if this was the Client Configuration Descriptor
+            if (descriptor.uuid == UUID.fromString(CCC_DESCRIPTOR_UUID)) {
+                if (status == GATT_SUCCESS) {
+                    // Check if we were turning notify on or off
+                    val value: ByteArray = descriptor.value
+
+                    if (value != null) {
+                        if (value[0] != Byte.MIN_VALUE) {
+                            // Notify set to on, add it to the set of notifying characteristics
+                            notifyingCharacteristics.add(parentCharacteristic.uuid)
+                        }
+                    } else {
+                        // Notify was turned off, so remove it from the set of notifying characteristics
+                        notifyingCharacteristics.remove(parentCharacteristic.uuid)
+                    }
+                }
+
+                // This was a setNotify operation
+                Log.d(TAG, "onDescriptorWrite called - ${descriptor.characteristic} - ${descriptor.value.toString(
+                    Charset.defaultCharset())}")
+
+            } else {
+                // This was a normal descriptor write....
+                super.onDescriptorWrite(gatt, descriptor, status)
+            }
+
+            completedCommand()
+        }
+
     }
 
     private fun completedCommand() {
         commandQueueBusy = false
         isRetrying = false
-        commandQueue!!.poll()
+        commandQueue!!.dequeue()
         nextCommand()
     }
 
@@ -309,12 +507,16 @@ class Bluetooth {
         return deviceList
     }
 
+    fun getConnectedDevice(): BluetoothGatt {
+        return this.connectedDevice
+    }
+
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             val device = result.device
             Log.d("BLUETOOTH", "Device found: " + device.name + ", " + device.type + ", " + device.address)
 
-            if (!deviceList.contains(device)) {
+            if (!deviceList.contains(device) && device.name !== null) { // do we want to only show devices with a name?
                 deviceList.add(device)
             }
             // ...do whatever you want with this found device
