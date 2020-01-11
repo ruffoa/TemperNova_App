@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.tempernova">
+    package="com.ruffo.tempernova">
 
     <!--
          The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
@@ -13,7 +13,7 @@
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <permission
-        android:name="com.example.permission.MAPS_RECEIVE"
+        android:name="com.ruffo.permission.MAPS_RECEIVE"
         android:protectionLevel="signature" />
 
     <uses-permission android:name="com.example.permission.MAPS_RECEIVE" />
@@ -42,21 +42,21 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".MapsActivity"
+            android:name="com.ruffo.tempernova.MapsActivity"
             android:label="@string/title_activity_maps">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.tempernova.MapsActivity" />
+                android:value="com.ruffo.tempernova.MapsActivity" />
         </activity>
         <activity
-            android:name=".SettingsActivity"
+            android:name="com.ruffo.tempernova.SettingsActivity"
             android:label="@string/title_activity_settings">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.example.tempernova.SettingsActivity" />
+                android:value="com.ruffo.tempernova.SettingsActivity" />
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name="com.ruffo.tempernova.MainActivity"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
