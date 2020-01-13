@@ -28,8 +28,10 @@ import com.ruffo.tempernova.helpers.Bluetooth
 import com.ruffo.tempernova.helpers.LocationHelper
 import com.ruffo.tempernova.helpers.RepeatListener
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.ruffo.tempernova.ui.home.HomeFragment
 import com.sergivonavi.materialbanner.Banner
 import com.sergivonavi.materialbanner.BannerInterface
+import java.lang.Error
 
 class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogListener {
     var temperature: Int = 68
@@ -151,46 +153,67 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
     }
 
     fun updateTemp(view: View) {
-        val tempDisplayButton: Button = view.findViewById(R.id.tempDisplayButton)
-        val tempDownButton: Button = view.findViewById(R.id.tempDownButton)
-        val tempUpButton: Button = view.findViewById(R.id.tempUpButton)
+//        val homeFrag: HomeFragment = supportFragmentManager.findFragmentByTag("HomeFragment") as HomeFragment
 
-        if (bluetoothStatus == Bluetooth.BluetoothStates.CONNECTED && currTemp !== null) {
-            tempDisplayButton.text = Html.fromHtml("<b><big>" +  temperature.toString() + getString(R.string.temperature_celcius_unit_string) + "</big></b>" +  "<br />" +
-                    "<small>" +  currTemp.toString() + getString(R.string.temperature_celcius_unit_string) + "</small>" + "<br />")
-        } else {
-            tempDisplayButton.text = temperature.toString() + getString(R.string.temperature_celcius_unit_string)
-        }
+        try {
+            val tempDisplayButton: Button? = view.findViewById(R.id.tempDisplayButton)
+            val tempDownButton: Button? = view.findViewById(R.id.tempDownButton)
+            val tempUpButton: Button? = view.findViewById(R.id.tempUpButton)
 
-        when {
-            isDisabled -> {
-                tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.material_on_surface_disabled))
+            if (tempDisplayButton === null || tempDownButton === null || tempUpButton === null) {
+                return
             }
-            currTemp !== null && temperature > currTemp!! -> {
-                val BackGroundColor = arrayOf(
-                    ColorDrawable(Color.parseColor("#ff0000")),
-                    ColorDrawable(Color.parseColor("#56ff00"))
+
+            if (bluetoothStatus == Bluetooth.BluetoothStates.CONNECTED && currTemp !== null) {
+                tempDisplayButton.text = Html.fromHtml(
+                    "<b><big>" + temperature.toString() + getString(R.string.temperature_celcius_unit_string) + "</big></b>" + "<br />" +
+                            "<small>" + currTemp.toString() + getString(R.string.temperature_celcius_unit_string) + "</small>" + "<br />"
                 )
+            } else {
+                tempDisplayButton.text =
+                    temperature.toString() + getString(R.string.temperature_celcius_unit_string)
+            }
 
-                transitiondrawable = TransitionDrawable(BackGroundColor)
-                transitiondrawable = resources.getDrawable(R.drawable.button_bg_transition_default_to_warm, theme)
-    //            tempDisplayButton.background = transitiondrawable // broken, so disabled for now...
-                tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorPrimaryDark))
+            when {
+                isDisabled -> {
+                    tempDisplayButton.backgroundTintList =
+                        ColorStateList.valueOf(getColor(R.color.material_on_surface_disabled))
+                }
+                currTemp !== null && temperature > currTemp!! -> {
+                    val BackGroundColor = arrayOf(
+                        ColorDrawable(Color.parseColor("#ff0000")),
+                        ColorDrawable(Color.parseColor("#56ff00"))
+                    )
+
+                    transitiondrawable = TransitionDrawable(BackGroundColor)
+                    transitiondrawable = resources.getDrawable(
+                        R.drawable.button_bg_transition_default_to_warm,
+                        theme
+                    )
+                    //            tempDisplayButton.background = transitiondrawable // broken, so disabled for now...
+                    tempDisplayButton.backgroundTintList =
+                        ColorStateList.valueOf(getColor(R.color.colorPrimaryDark))
+                }
+                currTemp !== null && temperature == currTemp -> {
+                    tempDisplayButton.backgroundTintList =
+                        ColorStateList.valueOf(getColor(R.color.colorTempDoneHex))
+                }
+                currTemp !== null && temperature <= currTemp!! -> {
+                    tempDisplayButton.backgroundTintList =
+                        ColorStateList.valueOf(getColor(R.color.colorTempCooling))
+                }
+                else -> {
+                    tempDisplayButton.backgroundTintList =
+                        ColorStateList.valueOf(getColor(R.color.material_on_surface_disabled))
+                }
             }
-            currTemp !== null && temperature == currTemp -> {
-                tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorTempDoneHex))
-            }
-            currTemp !== null && temperature <= currTemp!! -> {
-                tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.colorTempCooling))
-            }
-            else -> {
-                tempDisplayButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.material_on_surface_disabled))
-            }
+
+            tempDisplayButton.isEnabled = !isDisabled
+            tempDownButton.isEnabled = !isDisabled
+            tempUpButton.isEnabled = !isDisabled
+        } catch (e: Error) {
+
         }
-
-        tempDisplayButton.isEnabled = !isDisabled
-        tempDownButton.isEnabled = !isDisabled
-        tempUpButton.isEnabled = !isDisabled
     }
 
     fun saveIntPref(value: Int, pref: String) {

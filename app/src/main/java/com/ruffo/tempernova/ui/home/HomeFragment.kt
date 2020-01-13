@@ -130,6 +130,10 @@ class HomeFragment : Fragment() {
     }
 
     fun waitForResult(view: View) {
+        if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.CONNECTED) {
+            return
+        }
+
         if ((activity as MainActivity).bluetoothClass.getDeviceList().isNotEmpty())
             showDevices(view)
         else

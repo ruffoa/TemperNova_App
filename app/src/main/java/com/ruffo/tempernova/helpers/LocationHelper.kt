@@ -33,7 +33,7 @@ class LocationHelper {
         val bitmap: Bitmap? = bitmap
     }
 
-    lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
+    private lateinit var mFusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
 
     private lateinit var locationRequest: LocationRequest
@@ -43,8 +43,8 @@ class LocationHelper {
 
     private val REQUEST_LOCATION_PERMISSIONS = 1
     val REQUEST_CHECK_SETTINGS = 2
-    val LOCATION_LIST_MAX_SIZE = 15
-    val gson = Gson()
+    private val LOCATION_LIST_MAX_SIZE = 15
+    private val gson = Gson()
 
     private var locationList: MutableList<LocationData> = mutableListOf()
 
@@ -191,18 +191,49 @@ class LocationHelper {
 //        Log.d("TAG", "trying to add to list!")
 //        Log.d("TAG", "Address is " + address?.getAddressLine(0))
 
-        if (address === null || address.getAddressLine(0) == "") {
-            return
-        }
+        if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.DISCONNECTED) {    // only add places if we've lost connection!
 
-        if (lastLocation !== null && lastLocation.address !== address.getAddressLine(0)) { // don't just continuously add the last place!
-            locationList.add(LocationData(latLng, address))
-            if (locationList.size > LOCATION_LIST_MAX_SIZE) {
-                locationList = locationList.drop(locationList.size - LOCATION_LIST_MAX_SIZE).toMutableList()   // remove the first n elements from the list where n is the number of elements more than the set max we want to store.
+            if (address === null || address.getAddressLine(0) == "") {
+                return
             }
-        } else {    // same location, so let's just update the time we saved!
-            locationList = locationList.dropLast(1).toMutableList()
-            locationList.add(LocationData(latLng, address))
+
+            if (lastLocation !== null && lastLocation.address !== address.getAddressLine(0)) { // don't just continuously add the last place!
+                locationList.add(LocationData(latLng, address))
+                if (locationList.size > LOCATION_LIST_MAX_SIZE) {
+                    locationList = locationList.drop(locationList.size - LOCATION_LIST_MAX_SIZE)
+                        .toMutableList()   // remove the first n elements from the list where n is the number of elements more than the set max we want to store.
+                }
+            } else {    // same location, so let's just update the time we saved!
+                locationList = locationList.dropLast(1).toMutableList()
+                locationList.add(LocationData(latLng, address))
+            }
+        }
+    }
+
+    public fun addLastKnownLocationToList(activity: Activity) {
+        mFusedLocationProviderClient.lastLocation.addOnSuccessListener  {
+            val location = it!!
+            val latLng = LatLng(location.latitude, location.longitude)
+            val address = getAddressFromLatLng(activity, latLng)
+            val lastLocation = if (locationList.size > 0) locationList.last() else null
+
+
+            if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.DISCONNECTED) {    // only add places if we've lost connection!
+
+                if (location === null || address!!.getAddressLine(0) == "") {
+
+                }
+                else if (lastLocation !== null && lastLocation.address !== address!!.getAddressLine(0)) { // don't just continuously add the last place!
+                    locationList.add(LocationData(latLng, address))
+                    if (locationList.size > LOCATION_LIST_MAX_SIZE) {
+                        locationList = locationList.drop(locationList.size - LOCATION_LIST_MAX_SIZE)
+                            .toMutableList()   // remove the first n elements from the list where n is the number of elements more than the set max we want to store.
+                    }
+                } else {    // same location, so let's just update the time we saved!
+                    locationList = locationList.dropLast(1).toMutableList()
+                    locationList.add(LocationData(latLng, address))
+                }
+            }
         }
     }
 
@@ -274,6 +305,10 @@ class LocationHelper {
     fun clearAllButLatest() {
         if (locationList.size > 0)
             locationList = locationList.drop(locationList.size - 1).toMutableList()     // drop all elements but the last one
+    }
+
+    fun clearAll() {
+        locationList = mutableListOf()     // drop all elements
     }
 
     fun clearItemAtPosition(pos: Int) {

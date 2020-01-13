@@ -2,7 +2,7 @@ package com.ruffo.tempernova.helpers
 
 import android.app.Activity
 import android.bluetooth.*
-import android.bluetooth.BluetoothDevice.TRANSPORT_LE
+import android.bluetooth.BluetoothDevice.*
 import android.bluetooth.BluetoothGatt.GATT_SUCCESS
 import android.bluetooth.BluetoothGattCharacteristic.*
 import android.bluetooth.le.ScanCallback
@@ -12,6 +12,7 @@ import android.bluetooth.le.ScanSettings
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Handler
 import android.util.Log
 import androidx.core.app.ActivityCompat.startActivityForResult
@@ -48,7 +49,7 @@ class Bluetooth {
     private lateinit var appContext: Context
 
     enum class BluetoothStates {
-        UNAVAILABLE, OFF, ON, CONNECTED
+        UNAVAILABLE, OFF, ON, CONNECTED, DISCONNECTED
     }
 
     private val profileListener = object : BluetoothProfile.ServiceListener {
@@ -87,7 +88,10 @@ class Bluetooth {
         bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HEADSET, bluetoothHeadset)
 
         bluetoothDeviceListAdapter = BTLEDeviceListAdapter(bluetoothDevices, BluetoothDeviceListFragment())
-        appContext = context
+        if (!::appContext.isInitialized) {
+            appContext = context
+        }
+
         return BluetoothStates.ON
     }
 
@@ -428,6 +432,73 @@ class Bluetooth {
     }
 
     private val bleGattCallback: BluetoothGattCallback = object : BluetoothGattCallback() {
+        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            if(status == GATT_SUCCESS) {
+                Log.d(TAG, "New state is: $newState")
+
+                when (newState) {
+                    BluetoothProfile.STATE_CONNECTED -> {
+                        // We successfully connected, proceed with service discovery
+
+                        val bondState: Int = gatt.device.bondState
+                        // Take action depending on the bond state
+                        // Take action depending on the bond state
+                        if (bondState == BOND_NONE || bondState == BOND_BONDED) { // Connected to device, now proceed to discover it's services but delay a bit if needed
+                            var delayWhenBonded = 0
+                            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
+                                delayWhenBonded = 1000
+                            }
+                            val delay =
+                                if (bondState == BOND_BONDED) delayWhenBonded else 0
+                            val discoverServicesRunnable = Runnable {
+                                Log.d(
+                                    TAG,
+                                    java.lang.String.format(
+                                        Locale.ENGLISH,
+                                        "discovering services of '%s' with delay of %d ms",
+                                        gatt.device.name,
+                                        delay
+                                    )
+                                )
+                                val result = gatt.discoverServices()
+                                if (!result) {
+                                    Log.e(TAG, "discoverServices failed to start")
+                                }
+//                            discoverServicesRunnable = null
+                            }
+                            bleHandler.postDelayed(discoverServicesRunnable, delay.toLong())
+                        } else if (bondState == BOND_BONDING) { // Bonding process in progress, let it complete
+                            Log.i(TAG, "waiting for bonding to complete")
+                        }
+
+                        gatt.discoverServices()
+                    }
+                    BluetoothProfile.STATE_DISCONNECTED -> {
+                        // We successfully disconnected on our own request
+                        gatt.close()
+                    }
+                    else -> {
+                        // We're CONNECTING or DISCONNECTING, ignore for now
+                        Log.d(TAG, "New state is: $newState")
+                        super.onConnectionStateChange(gatt, status, newState)
+                    }
+                }
+            } else {
+                // An error happened...figure out what happened!
+                Log.d(TAG, "New state is: $newState")
+
+                if (newState === BluetoothProfile.STATE_DISCONNECTED || newState === BluetoothProfile.STATE_DISCONNECTING) {
+                    // handle location saving here, as we are disconnecting from the device...
+
+                    if (::appContext.isInitialized) {
+                        (appContext as MainActivity).bluetoothStatus = BluetoothStates.DISCONNECTED
+                        (appContext as MainActivity).locationHelper.addLastKnownLocationToList(appContext as MainActivity)
+                    }
+                }
+                gatt.close()
+            }
+        }
+
         override fun onCharacteristicRead(
             gatt: BluetoothGatt?,
             characteristic: BluetoothGattCharacteristic?,
