@@ -10,6 +10,7 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.TransitionDrawable
 import android.os.Bundle
 import android.text.Html
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -170,8 +171,8 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
                             "<small>" + currTemp.toString() + getString(R.string.temperature_celcius_unit_string) + "</small>" + "<br />"
                 )
             } else {
-                tempDisplayButton.text =
-                    temperature.toString() + getString(R.string.temperature_celcius_unit_string)
+                Log.d("updateTemp", "BluetoothStatus is $bluetoothStatus")
+                tempDisplayButton.text = Html.fromHtml("<b><big>" + temperature.toString() + getString(R.string.temperature_celcius_unit_string) + "</big></b>" + "<br />")
             }
 
             when {
@@ -212,7 +213,7 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
             tempDownButton.isEnabled = !isDisabled
             tempUpButton.isEnabled = !isDisabled
         } catch (e: Error) {
-
+            Log.e("updateTemp (Main Activity)", "SOMETHING BROKE :( $e")
         }
     }
 
@@ -285,6 +286,14 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
 
     fun displayBluetoothPairedBanner(view: View, msg: String) {
         banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, null, R.drawable.logo_round, BannerInterface.OnClickListener {
+            it.dismiss()
+        })
+
+        banner.show()
+    }
+
+    fun displayBluetoothDisconnectedBanner(view: View, msg: String) {
+        banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, null, R.drawable.ic_bluetooth_disabled_black_24dp, BannerInterface.OnClickListener {
             it.dismiss()
         })
 

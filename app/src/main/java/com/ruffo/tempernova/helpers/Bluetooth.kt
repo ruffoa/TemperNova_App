@@ -92,6 +92,11 @@ class Bluetooth {
             appContext = context
         }
 
+        if (::bluetoothGatt.isInitialized && bluetoothGatt.device !== null) {
+            Log.d(TAG, "Has a valid connection, returning CONNECTED")
+            return BluetoothStates.CONNECTED
+        }
+
         return BluetoothStates.ON
     }
 
@@ -493,6 +498,17 @@ class Bluetooth {
                     if (::appContext.isInitialized) {
                         (appContext as MainActivity).bluetoothStatus = BluetoothStates.DISCONNECTED
                         (appContext as MainActivity).locationHelper.addLastKnownLocationToList(appContext as MainActivity)
+                        (appContext as MainActivity).runOnUiThread {
+                            (appContext as MainActivity).displayBluetoothDisconnectedBanner(
+                                (appContext as MainActivity).findViewById(
+                                    R.id.nav_host_fragment
+                                ), "${gatt.device.name} Disconnected"
+                            )
+                            (appContext as MainActivity).changeDisabledState(true)
+                            (appContext as MainActivity).updateTemp((appContext as MainActivity).findViewById(
+                                R.id.nav_host_fragment
+                            ))
+                        }
                     }
                 }
                 gatt.close()

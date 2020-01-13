@@ -12,6 +12,7 @@
     <string name="location_list_preference_key">savedLocationListPreferenceKey</string>
 
     <!--  Bluetooth Banner Messages  -->
+    <string name="bluetooth_disconnected">Device Disconnected</string>
     <string name="bluetooth_unavailable">Bluetooth is currently unavailable. Try turning on Bluetooth if your device supports it.</string>
     <string name="bluetooth_unavailable_action">Try Turning On Bluetooth</string>
     <string name="bluetooth_off">You have disabled Bluetooth.</string>

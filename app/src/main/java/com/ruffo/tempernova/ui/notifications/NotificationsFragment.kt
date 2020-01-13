@@ -104,7 +104,6 @@ class NotificationsFragment : Fragment() {
 
         adapter.setOnItemClickListener(onItemClickListener)
 
-
         val myHelper = ItemTouchHelper(onItemSwipeListener)
         myHelper.attachToRecyclerView(notifications_list)
     }

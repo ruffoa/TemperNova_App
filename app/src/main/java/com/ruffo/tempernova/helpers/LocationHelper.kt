@@ -2,6 +2,7 @@ package com.ruffo.tempernova.helpers
 
 import android.app.Activity
 import android.content.ContentValues
+import android.content.ContentValues.TAG
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
@@ -198,6 +199,7 @@ class LocationHelper {
             }
 
             if (lastLocation !== null && lastLocation.address !== address.getAddressLine(0)) { // don't just continuously add the last place!
+                Log.d(TAG, "Adding ${address.getAddressLine(0)} - last was ${lastLocation.address} -> ${address.getAddressLine(0) === lastLocation.address}")
                 locationList.add(LocationData(latLng, address))
                 if (locationList.size > LOCATION_LIST_MAX_SIZE) {
                     locationList = locationList.drop(locationList.size - LOCATION_LIST_MAX_SIZE)
@@ -210,7 +212,7 @@ class LocationHelper {
         }
     }
 
-    public fun addLastKnownLocationToList(activity: Activity) {
+    fun addLastKnownLocationToList(activity: Activity) {
         mFusedLocationProviderClient.lastLocation.addOnSuccessListener  {
             val location = it!!
             val latLng = LatLng(location.latitude, location.longitude)
@@ -220,10 +222,10 @@ class LocationHelper {
 
             if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.DISCONNECTED) {    // only add places if we've lost connection!
 
-                if (location === null || address!!.getAddressLine(0) == "") {
-
+                if (address!!.getAddressLine(0) == "") {
+                    // do nothing, this is "returning" from the listener function!
                 }
-                else if (lastLocation !== null && lastLocation.address !== address!!.getAddressLine(0)) { // don't just continuously add the last place!
+                else if (lastLocation !== null && lastLocation.address !== address.getAddressLine(0)) { // don't just continuously add the last place!
                     locationList.add(LocationData(latLng, address))
                     if (locationList.size > LOCATION_LIST_MAX_SIZE) {
                         locationList = locationList.drop(locationList.size - LOCATION_LIST_MAX_SIZE)
