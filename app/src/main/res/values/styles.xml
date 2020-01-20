@@ -11,4 +11,9 @@
         <item name="android:windowContentTransitions">true</item>
     </style>
 
+    <style name="ShapeAppearanceOverlay.Tempernova.Button.Rounded" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">250dp</item>
+    </style>
+
 </resources>
