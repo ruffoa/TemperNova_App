@@ -1,5 +1,6 @@
 package com.ruffo.tempernova
 
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
@@ -35,7 +36,7 @@ import com.google.android.material.card.MaterialCardView
 import com.ruffo.tempernova.helpers.Temperature
 import com.sergivonavi.materialbanner.Banner
 import com.sergivonavi.materialbanner.BannerInterface
-import java.lang.Error
+import kotlin.Error
 
 class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListener{
     var temperature: Int = 68
@@ -129,10 +130,13 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
         if (nRefills <= 0)
             return
 
-        val refillsCard: MaterialCardView = view.findViewById(R.id.homeRefillInfoCard)
-        val refillsCardImage: ImageView = view.findViewById(R.id.homeRefillInfoCardImage)
-        val refillsCardTitle: TextView = view.findViewById(R.id.homeRefillInfoCardTitle)
-        val refillsCardText: TextView = view.findViewById(R.id.homeRefillInfoCardText)
+        val refillsCard: MaterialCardView? = view.findViewById(R.id.homeRefillInfoCard)
+        val refillsCardImage: ImageView? = view.findViewById(R.id.homeRefillInfoCardImage)
+        val refillsCardTitle: TextView? = view.findViewById(R.id.homeRefillInfoCardTitle)
+        val refillsCardText: TextView? = view.findViewById(R.id.homeRefillInfoCardText)
+
+        if (refillsCard === null || refillsCardImage === null || refillsCardText === null || refillsCardTitle === null)
+            return
 
         refillsCardImage.setImageDrawable(getDrawable(R.drawable.coffee_background))
         refillsCardTitle.text = getString(R.string.refill_card_title, nRefills)
@@ -141,6 +145,7 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
         refillsCardText.text = getString(R.string.refill_card_text, averageRefills)
         refillsCard.visibility = View.VISIBLE
         Log.d("MAINACTIVITY", "SHOWING THE REFILLS CARD")
+
     }
 
     fun readIntegerSharedPrefs(default: Int, key: String): Int {
