@@ -51,10 +51,15 @@ class HomeFragment : Fragment() {
         (activity as MainActivity).updateTemp(root)
         (activity as MainActivity).checkAndUpdateBluetoothStatus()
 
+        (activity as MainActivity).updateRefillsCard(root)
+
         checkBluetooth(root)
         scanForDevices(root)
 
-        waitForResult(root)
+        val context = requireContext()
+        if (context !== null) {
+            waitForResult(root)
+        }
 
         return root
     }

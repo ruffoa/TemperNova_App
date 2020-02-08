@@ -429,6 +429,7 @@ class Bluetooth {
             if (context !== null && temp > -100) {
                 (context as MainActivity).currTemp = temp
                 (context as MainActivity).changeDisabledState(false)
+                context.temperatureClass.updateAvgTemp(temp)
                 (context as MainActivity).runOnUiThread {
                     (context as MainActivity).updateTemp(
                         (context as MainActivity).findViewById(

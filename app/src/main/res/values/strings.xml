@@ -34,4 +34,9 @@
 
     <string name="title_activity_maps">Map</string>
     <string name="title_activity_settings">Settings</string>
+
+    <!--  Refill Card Strings  -->
+    <string name="refill_card_title">%d Refills Today</string>
+    <string name="refill_card_text">You drink %1$.1f mugs per day on average</string>
+    <string name="title_activity_chart">ChartActivity</string>
 </resources>

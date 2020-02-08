@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:card_view="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:tag="HomeFragment">
@@ -14,66 +15,157 @@
             android:id="@+id/home_root_linear_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingBottom="8dp"
-            android:orientation="vertical">
-        </FrameLayout>
+            android:orientation="vertical" />
 
-        <LinearLayout
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:padding="18dp"
-            android:gravity="center"
-            android:weightSum="1">
+            android:layout_height="wrap_content">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/tempDisplayButton"
-                android:layout_width="300dp"
-                android:layout_height="300dp"
-                android:layout_gravity="center"
-                android:drawableTint="@color/colorPrimaryDark"
-                android:padding="24dp"
-                android:textColor="@android:color/white"
-                android:textSize="36sp"
-                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Tempernova.Button.Rounded"
-                />
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center">
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/tempDownButton"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginLeft="40dp"
-                android:layout_marginRight="40dp"
-                android:layout_weight="1"
-                android:backgroundTint="@color/design_default_color_primary_dark"
-                android:padding="8dp"
-                android:text="-"
-                android:textColor="@android:color/white"
-                android:textSize="36dp" />
+                android:orientation="vertical"
+                android:paddingBottom="?attr/actionBarSize">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/tempUpButton"
-                android:layout_gravity="center"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginRight="40dp"
-                android:layout_marginLeft="40dp"
-                android:padding="8dp"
-                android:textColor="@android:color/white"
-                android:backgroundTint="@color/colorPrimaryDark"
-                android:text="+"
-                android:textSize="36dp"/>
-        </LinearLayout>
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/mtrl_card_spacing"
+                    android:layout_marginTop="@dimen/mtrl_card_spacing"
+                    android:layout_marginRight="@dimen/mtrl_card_spacing"
+                    card_view:cardCornerRadius="@dimen/cardview_default_radius"
+                    card_view:cardElevation="@dimen/cardview_default_elevation">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:padding="18dp"
+                            android:weightSum="1">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/tempDisplayButton"
+                                android:layout_width="300dp"
+                                android:layout_height="300dp"
+                                android:layout_gravity="center"
+                                android:drawableTint="?android:attr/colorPrimaryDark"
+                                android:padding="24dp"
+                                android:textColor="@android:color/white"
+                                android:textSize="36sp"
+                                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.Tempernova.Button.Rounded" />
+
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:gravity="center"
+                            android:orientation="horizontal"
+                            android:paddingBottom="24dp">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/tempDownButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginLeft="40dp"
+                                android:layout_marginRight="40dp"
+                                android:layout_weight="1"
+                                android:backgroundTint="@color/design_default_color_primary_dark"
+                                android:padding="8dp"
+                                android:text="-"
+                                android:textColor="@android:color/white"
+                                android:textSize="36dp" />
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/tempUpButton"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_gravity="center"
+                                android:layout_marginLeft="40dp"
+                                android:layout_marginRight="40dp"
+                                android:layout_weight="1"
+                                android:backgroundTint="@color/colorPrimaryDark"
+                                android:padding="8dp"
+                                android:text="+"
+                                android:textColor="@android:color/white"
+                                android:textSize="36dp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/homeRefillInfoCard"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/mtrl_card_spacing"
+                    android:layout_marginTop="@dimen/mtrl_card_spacing"
+                    android:layout_marginBottom="@dimen/mtrl_card_spacing"
+                    android:layout_marginRight="@dimen/mtrl_card_spacing"
+                    card_view:cardCornerRadius="@dimen/cardview_default_radius"
+                    card_view:cardElevation="@dimen/cardview_default_elevation"
+                    android:visibility="gone">
+
+                    <androidx.constraintlayout.widget.ConstraintLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp">
+
+                        <ImageView
+                            android:id="@+id/homeRefillInfoCardImage"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent"
+                            android:adjustViewBounds="true"
+                            android:layout_gravity="center"
+                            android:scaleType="centerInside"
+                            android:cropToPadding="true" />
+
+
+                            <TextView
+                                android:id="@+id/homeRefillInfoCardTitle"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:paddingBottom="4dp"
+                                android:layout_marginStart="16dp"
+                                android:layout_marginLeft="16dp"
+                                android:layout_marginTop="16dp"
+                                android:textColor="?android:attr/textColorPrimary"
+                                android:textAppearance="?android:attr/textAppearanceListItem"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toBottomOf="@+id/homeRefillInfoCardImage" />
+
+
+                            <TextView
+                                android:id="@+id/homeRefillInfoCardText"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:layout_marginLeft="16dp"
+                                android:layout_marginBottom="8dp"
+                                android:textAppearance="?android:attr/textAppearanceListItemSecondary"
+                                app:layout_constraintStart_toStartOf="@+id/homeRefillInfoCardTitle"
+                                app:layout_constraintTop_toBottomOf="@+id/homeRefillInfoCardTitle"/>
+
+                    </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <!-- Used for the ripple effect on touch -->
+                    <LinearLayout
+                        android:id="@+id/homeRefillInfoCardHolder"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="?android:selectableItemBackground"
+                        android:orientation="vertical" />
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+        </ScrollView>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
