@@ -19,6 +19,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.DialogFragment
 import androidx.navigation.findNavController
@@ -52,7 +53,6 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
     lateinit var locationHelper: LocationHelper
 
     var temperatureClass: Temperature = Temperature()
-    var nRefills: Int = 0
 
     private val bannerClass = BannerComponent()
     private lateinit var banner: Banner
@@ -83,7 +83,7 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
         navView.setupWithNavController(navController)
         mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
         temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
-        nRefills = readIntegerSharedPrefs(0, getString(R.string.refills_preference_key))
+        temperatureClass.updateRefillsFromPrefs()
         bluetoothClass.createBluetoothManager(this.applicationContext)
         bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
 
@@ -98,7 +98,6 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
     override fun onPause() {
         super.onPause()
         saveIntPref(temperature, getString(R.string.temperature_preference_key))
-        saveIntPref(nRefills, getString(R.string.refills_preference_key))
 
         if (::locationHelper.isInitialized)
             locationHelper.storeLocationList(this)
@@ -107,7 +106,7 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
     override fun onStop() {
         super.onStop()
         saveIntPref(temperature, getString(R.string.temperature_preference_key))
-        saveIntPref(nRefills, getString(R.string.refills_preference_key))
+        temperatureClass.saveRefillsToPrefs()
 
         if (::locationHelper.isInitialized)
             locationHelper.storeLocationList(this)
@@ -120,11 +119,12 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
             locationHelper.readLocationListFromPref(this)
     }
 
-    fun addRefil() {
-        nRefills++
-    }
-
     fun updateRefillsCard(view: View) {
+        val nRefills = temperatureClass.getTodaysRefills()
+
+        if (nRefills === null)
+            return
+
         Log.d("MAINACTIVITY", "NRefills: $nRefills")
 
         if (nRefills <= 0)
@@ -143,9 +143,18 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
 
         val averageRefills = temperatureClass.getAverageRefills()
         refillsCardText.text = getString(R.string.refill_card_text, averageRefills)
+
+        refillsCard.setOnClickListener(onRefillsCardClickListener)
         refillsCard.visibility = View.VISIBLE
         Log.d("MAINACTIVITY", "SHOWING THE REFILLS CARD")
 
+    }
+
+    private val onRefillsCardClickListener = View.OnClickListener {
+        Log.d("onRefillsCardClickListener", "Calling CARD ON CLICK!")
+
+        val intent = Intent(this, ChartActivity::class.java).apply {}
+        ActivityCompat.startActivity(this, intent, null)
     }
 
     fun readIntegerSharedPrefs(default: Int, key: String): Int {
