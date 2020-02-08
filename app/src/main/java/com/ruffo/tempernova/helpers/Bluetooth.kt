@@ -2,7 +2,8 @@ package com.ruffo.tempernova.helpers
 
 import android.app.Activity
 import android.bluetooth.*
-import android.bluetooth.BluetoothDevice.TRANSPORT_LE
+import android.bluetooth.BluetoothDevice.*
+import android.bluetooth.BluetoothGatt.GATT
 import android.bluetooth.BluetoothGatt.GATT_SUCCESS
 import android.bluetooth.BluetoothGattCharacteristic.*
 import android.bluetooth.le.ScanCallback
@@ -12,6 +13,7 @@ import android.bluetooth.le.ScanSettings
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Handler
 import android.util.Log
 import androidx.core.app.ActivityCompat.startActivityForResult
@@ -27,6 +29,9 @@ private const val CCC_DESCRIPTOR_UUID = "00002902-0000-1000-8000-00805f9b34fb"
 
 class Bluetooth {
     var bluetoothHeadset: BluetoothHeadset? = null
+
+    private lateinit var bluetoothManager: BluetoothManager
+
     // Get the default adapter
     private val bluetoothAdapter: BluetoothAdapter? = BluetoothAdapter.getDefaultAdapter()  // code from https://github.com/gabrielseibel1/BLEHeater/blob/master/app/src/main/java/br/com/embs/bleheater/utils/BLEHelper.kt
     private lateinit var bluetoothDeviceListAdapter: BTLEDeviceListAdapter
@@ -45,10 +50,8 @@ class Bluetooth {
     private val MAX_TRIES: Int = 3
     private var bleHandler = Handler()
 
-    private lateinit var appContext: Context
-
     enum class BluetoothStates {
-        UNAVAILABLE, OFF, ON, CONNECTED
+        UNAVAILABLE, OFF, ON, CONNECTED, DISCONNECTED
     }
 
     private val profileListener = object : BluetoothProfile.ServiceListener {
@@ -64,6 +67,10 @@ class Bluetooth {
                 bluetoothHeadset = null
             }
         }
+    }
+
+    fun createBluetoothManager(context: Context) {
+        bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     }
 
     fun checkBluetooth(context: Context): BluetoothStates {
@@ -87,7 +94,20 @@ class Bluetooth {
         bluetoothAdapter?.closeProfileProxy(BluetoothProfile.HEADSET, bluetoothHeadset)
 
         bluetoothDeviceListAdapter = BTLEDeviceListAdapter(bluetoothDevices, BluetoothDeviceListFragment())
-        appContext = context
+
+        if (::bluetoothGatt.isInitialized && bluetoothGatt.device !== null) {
+//            if (::bluetoothStatus.isInitialized && bluetoothStatus === BluetoothStates.DISCONNECTED) {
+//                connectToDevice(context, bluetoothGatt.device)
+//            }
+
+            if (::bluetoothGatt.isInitialized && ::bluetoothManager.isInitialized && bluetoothManager.getConnectionState(bluetoothGatt.device, BluetoothProfile.GATT) === BluetoothProfile.STATE_DISCONNECTED) {
+                connectToDevice(bluetoothGatt.device)
+            } else {
+                Log.d(TAG, "Has a valid connection, returning CONNECTED")
+                return BluetoothStates.CONNECTED
+            }
+        }
+
         return BluetoothStates.ON
     }
 
@@ -356,22 +376,25 @@ class Bluetooth {
         bluetoothGatt.discoverServices()
     }
 
-    private fun connect(context: Context, device: BluetoothDevice) {
+    private fun connect(device: BluetoothDevice) {
+        val context = MainActivity.CoreHelper.contextGetter?.invoke()
+
         val gatt = device.connectGatt(context, false, bleGattCallback, TRANSPORT_LE)
         bluetoothGatt = gatt
 
         Log.d(TAG, "SUCCESS: Connected to ${device.name} (${device.address})")
         (context as MainActivity).bluetoothStatus = BluetoothStates.CONNECTED
-        appContext = context
 
         Handler().postDelayed({ waitAndGetServices() }, 500)    // wait for ~.25 seconds...
+
+        context.dismissBanner()
         context.displayBluetoothPairedBanner(
             context.findViewById(R.id.nav_host_fragment),
             "${device.name} (${device.address}) connected"
         )
     }
 
-    fun connectToDevice(context: Context, device: BluetoothDevice) {
+    fun connectToDevice(device: BluetoothDevice) {
         // Get device object for a mac address
         val device = bluetoothAdapter!!.getRemoteDevice(device.address)
         // Check if the peripheral is cached or not
@@ -383,11 +406,11 @@ class Bluetooth {
 
             scanDevices(false, device, 500) // re-scan for ~.5 seconds to get the device info, then let's re-call this func again to try to connect!
 
-            Handler().postDelayed({ connect(context, device) }, 510)    // wait for ~.5 seconds...
+            Handler().postDelayed({ connect(device) }, 510)    // wait for ~.5 seconds...
         } else {
             // The peripheral is cached - we've already scanned for it!
             // lets call the connect function!
-            connect(context, device)
+            connect(device)
         }
     }
 
@@ -401,12 +424,14 @@ class Bluetooth {
 
             val temp = value.toInt()
 
-            if (appContext !== null) {
-                (appContext as MainActivity).currTemp = temp
-                (appContext as MainActivity).changeDisabledState(false)
-                (appContext as MainActivity).runOnUiThread {
-                    (appContext as MainActivity).updateTemp(
-                        (appContext as MainActivity).findViewById(
+            val context = MainActivity.CoreHelper.contextGetter?.invoke()
+
+            if (context !== null && temp > -100) {
+                (context as MainActivity).currTemp = temp
+                (context as MainActivity).changeDisabledState(false)
+                (context as MainActivity).runOnUiThread {
+                    (context as MainActivity).updateTemp(
+                        (context as MainActivity).findViewById(
                             R.id.nav_host_fragment
                         )
                     )
@@ -419,7 +444,9 @@ class Bluetooth {
         }
     }
 
-    fun sendDesiredTemp(context: Context) {
+    fun sendDesiredTemp() {
+        val context = MainActivity.CoreHelper.contextGetter?.invoke()
+
         if ((context as MainActivity).bluetoothStatus === BluetoothStates.CONNECTED && ::gattServices.isInitialized && gattServices.isNotEmpty() && ::notifyingGattCharacteristic.isInitialized) {
             val temp = (context as MainActivity).temperature
 
@@ -428,6 +455,87 @@ class Bluetooth {
     }
 
     private val bleGattCallback: BluetoothGattCallback = object : BluetoothGattCallback() {
+        override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
+            if(status == GATT_SUCCESS) {
+                Log.d(TAG, "New state is: $newState")
+
+                when (newState) {
+                    BluetoothProfile.STATE_CONNECTED -> {
+                        // We successfully connected, proceed with service discovery
+
+                        val bondState: Int = gatt.device.bondState
+                        // Take action depending on the bond state
+                        // Take action depending on the bond state
+                        if (bondState == BOND_NONE || bondState == BOND_BONDED) { // Connected to device, now proceed to discover it's services but delay a bit if needed
+                            var delayWhenBonded = 0
+                            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.N) {
+                                delayWhenBonded = 1000
+                            }
+                            val delay =
+                                if (bondState == BOND_BONDED) delayWhenBonded else 0
+                            val discoverServicesRunnable = Runnable {
+                                Log.d(
+                                    TAG,
+                                    java.lang.String.format(
+                                        Locale.ENGLISH,
+                                        "discovering services of '%s' with delay of %d ms",
+                                        gatt.device.name,
+                                        delay
+                                    )
+                                )
+                                val result = gatt.discoverServices()
+                                if (!result) {
+                                    Log.e(TAG, "discoverServices failed to start")
+                                }
+//                            discoverServicesRunnable = null
+                            }
+                            bleHandler.postDelayed(discoverServicesRunnable, delay.toLong())
+                        } else if (bondState == BOND_BONDING) { // Bonding process in progress, let it complete
+                            Log.i(TAG, "waiting for bonding to complete")
+                        }
+
+                        gatt.discoverServices()
+                    }
+                    BluetoothProfile.STATE_DISCONNECTED -> {
+                        // We successfully disconnected on our own request
+                        gatt.close()
+                    }
+                    else -> {
+                        // We're CONNECTING or DISCONNECTING, ignore for now
+                        Log.d(TAG, "New state is: $newState")
+                        super.onConnectionStateChange(gatt, status, newState)
+                    }
+                }
+            } else {
+                // An error happened...figure out what happened!
+                Log.d(TAG, "New state is: $newState")
+
+                if (newState === BluetoothProfile.STATE_DISCONNECTED || newState === BluetoothProfile.STATE_DISCONNECTING) {
+                    // handle location saving here, as we are disconnecting from the device...
+
+                    val context = MainActivity.CoreHelper.contextGetter?.invoke()
+
+                    if (context !== null) {
+                        (context as MainActivity).bluetoothStatus = BluetoothStates.DISCONNECTED
+                        (context as MainActivity).locationHelper.addLastKnownLocationToList(context as MainActivity)
+                        (context as MainActivity).runOnUiThread {
+                            (context as MainActivity).dismissBanner()
+                            (context as MainActivity).displayBluetoothDisconnectedBanner(
+                                (context as MainActivity).findViewById(
+                                    R.id.nav_host_fragment
+                                ), "${gatt.device.name} Disconnected"
+                            )
+                            (context as MainActivity).changeDisabledState(true)
+                            (context as MainActivity).updateTemp((context as MainActivity).findViewById(
+                                R.id.nav_host_fragment
+                            ))
+                        }
+                    }
+                }
+                gatt.close()
+            }
+        }
+
         override fun onCharacteristicRead(
             gatt: BluetoothGatt?,
             characteristic: BluetoothGattCharacteristic?,
@@ -513,7 +621,7 @@ class Bluetooth {
                             // Notify set to on, add it to the set of notifying characteristics
                             notifyingCharacteristics.add(parentCharacteristic.uuid)
 
-                            sendDesiredTemp(appContext) // send temp back -> this way the Arduino knows what the initial setting is...
+                            sendDesiredTemp() // send temp back -> this way the Arduino knows what the initial setting is...
                         }
                     } else {
                         // Notify was turned off, so remove it from the set of notifying characteristics

@@ -64,10 +64,22 @@ class HomeFragment : Fragment() {
         println((activity as MainActivity).bluetoothStatus)
 
         if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.UNAVAILABLE) {
-            displayBluetoothDisabledWarningBanner(view, getString(R.string.bluetooth_unavailable), getString(R.string.bluetooth_unavailable_action))
+            displayBluetoothDisabledWarningBanner(
+                view,
+                getString(R.string.bluetooth_unavailable),
+                getString(R.string.bluetooth_unavailable_action)
+            )
         } else if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.OFF) {
-            displayBluetoothDisabledWarningBanner(view, getString(R.string.bluetooth_off), getString(R.string.bluetooth_off_action))
+            displayBluetoothDisabledWarningBanner(
+                view,
+                getString(R.string.bluetooth_off),
+                getString(R.string.bluetooth_off_action)
+            )
         } else {
+            if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.CONNECTED) {
+                (activity as MainActivity).changeDisabledState(false)
+            }
+
             if (::banner.isInitialized) {
                 banner.dismiss()
             }
@@ -81,7 +93,10 @@ class HomeFragment : Fragment() {
 
     fun showBluetoothDebugPopup(view: View) {
         val args = Bundle()
-        args.putString("devices", (activity as MainActivity).bluetoothClass.getDeviceList().toString())
+        args.putString(
+            "devices",
+            (activity as MainActivity).bluetoothClass.getDeviceList().toString()
+        )
 
 //        val bluetoothPopup = Dialog(context!!, android.R.style.Theme_Black_NoTitleBar)
 //        bluetoothPopup.getWindow()!!.setBackgroundDrawable(ColorDrawable(Color.argb(100, 0, 0, 0)))
@@ -101,7 +116,7 @@ class HomeFragment : Fragment() {
 
         val devices = popupView.findViewById(R.id.bluetooth_popup_devices) as TextView
         var devString = ""
-        (activity as MainActivity).bluetoothClass.getDeviceList().forEach{dev ->
+        (activity as MainActivity).bluetoothClass.getDeviceList().forEach { dev ->
             devString += dev.name + ": " + dev.address + " " + dev.type + " " + dev.bondState + "\n"
         }
 
@@ -121,55 +136,92 @@ class HomeFragment : Fragment() {
 
         // Using location, the PopupWindow will be displayed right under anchorView
         popupWindow.showAtLocation(
-            view.rootView, Gravity.CENTER, 0, 0)
+            view.rootView, Gravity.CENTER, 0, 0
+        )
     }
 
     fun showDevices(view: View) {
-        displayBluetoothPairingBanner(view, getString(R.string.bluetooth_select_device), getString(R.string.bluetooth_select_device_action))
+        displayBluetoothPairingBanner(
+            view,
+            getString(R.string.bluetooth_select_device),
+            getString(R.string.bluetooth_select_device_action)
+        )
 //        showBluetoothDebugPopup(view)
     }
 
     fun waitForResult(view: View) {
+        if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.CONNECTED) {
+            return
+        }
+
+        if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.DISCONNECTED) {
+//            (activity as MainActivity).bluetoothClass.connectToDevice(this.context!!, (activity as MainActivity).bluetoothClass.getConnectedDevice().device)    // Try to reconnect
+            showDevices(view)
+        }
+
         if ((activity as MainActivity).bluetoothClass.getDeviceList().isNotEmpty())
             showDevices(view)
         else
             Handler().postDelayed({ showDevices(view) }, 5000)    // wait for 5 seconds...
     }
 
-    private fun displayChooseDeviceDialog(view: View, title: String, msg: String, icon: Int, items: List<BluetoothDevice>) {
-        dialog = dialogClass.createDialog(view, view.findViewById(R.id.home_root_linear_layout), title, msg, R.drawable.ic_settings_bluetooth_black_24dp, items)
+    private fun displayChooseDeviceDialog(
+        view: View,
+        title: String,
+        msg: String,
+        icon: Int,
+        items: List<BluetoothDevice>
+    ) {
+        dialog = dialogClass.createDialog(
+            view,
+            view.findViewById(R.id.home_root_linear_layout),
+            title,
+            msg,
+            R.drawable.ic_settings_bluetooth_black_24dp,
+            items
+        )
         dialog.show()
     }
 
     private fun displayBluetoothPairingBanner(view: View, msg: String, actionMsg: String) {
-        banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, actionMsg, R.drawable.ic_bluetooth_black_24dp, BannerInterface.OnClickListener {
-            if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.ON) {
-                val items = (activity as MainActivity).bluetoothClass.getDeviceList()
+        banner = bannerClass.createBanner(
+            view,
+            view.findViewById(R.id.home_root_linear_layout),
+            msg,
+            actionMsg,
+            R.drawable.ic_bluetooth_black_24dp,
+            BannerInterface.OnClickListener {
+                if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.ON) {
+                    val items = (activity as MainActivity).bluetoothClass.getDeviceList()
 
-                displayChooseDeviceDialog(view, getString(R.string.bluetooth_select_device_action), getString(R.string.bluetooth_select_device_message), R.drawable.logo_round, items)
-                it.dismiss()
-            }
-        })
+                    displayChooseDeviceDialog(
+                        view,
+                        getString(R.string.bluetooth_select_device_action),
+                        getString(R.string.bluetooth_select_device_message),
+                        R.drawable.logo_round,
+                        items
+                    )
+                    it.dismiss()
+                }
+            })
 
         banner.show()
     }
 
     private fun displayBluetoothDisabledWarningBanner(view: View, msg: String, actionMsg: String) {
-        banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, actionMsg, R.drawable.ic_bluetooth_disabled_black_24dp, BannerInterface.OnClickListener {
-            (activity as MainActivity).bluetoothClass.enableBluetooth(this.activity!!)
+        banner = bannerClass.createBanner(
+            view,
+            view.findViewById(R.id.home_root_linear_layout),
+            msg,
+            actionMsg,
+            R.drawable.ic_bluetooth_disabled_black_24dp,
+            BannerInterface.OnClickListener {
+                (activity as MainActivity).bluetoothClass.enableBluetooth(this.activity!!)
 
-            if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.ON) {
-                it.dismiss()
-            }
-        })
-
-        banner.show()
-    }
-
-    fun displayBluetoothPairedBanner(view: View, msg: String, actionMsg: String) {
-        banner = bannerClass.createBanner(view, view.findViewById(R.id.home_root_linear_layout), msg, actionMsg, R.drawable.ic_bluetooth_connected_black_24dp, BannerInterface.OnClickListener {
-            it.dismiss()
-        })
+                if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.ON) {
+                    it.dismiss()
+                }
+            })
 
         banner.show()
     }
@@ -186,7 +238,8 @@ class HomeFragment : Fragment() {
 
         if (resultCode === Activity.RESULT_OK && requestCode === resources.getInteger(R.integer.bluetooth_choose_device_code)) {
             println("Bluetooth Device Selection RESULT OK! ${data.toString()}")
-            val seletcedItem = data!!.getIntExtra(getString(R.string.bluetooth_intent_selected_device), -1)
+            val seletcedItem =
+                data!!.getIntExtra(getString(R.string.bluetooth_intent_selected_device), -1)
             if (seletcedItem >= 0) {
                 Log.d("BLUETOOTH PAIRING", "device chosen is: $seletcedItem")
             }
@@ -198,17 +251,5 @@ class HomeFragment : Fragment() {
                 (activity as MainActivity).locationHelper.updateStateAndStartLocationUpdates(this.activity!!)
             }
         }
-
-        if (requestCode === resources.getInteger(R.integer.bluetooth_device_conntected_code)) {
-            println("Bluetooth Device Paired!  -> Calling event!")
-            val deviceGatt = (this.activity as MainActivity).bluetoothClass.getConnectedDevice()
-            displayBluetoothPairedBanner(this.view!!, "${deviceGatt.device.name} (${deviceGatt.device.address}) ${deviceGatt.device.bondState}", getString(R.string.action_message_okay))
-        }
     }
-
-//    override fun onBluetoothConnected() {
-//        Log.d("BLUETOOTH PAIRING", "device is paired!  Beginning banner code")
-//        val deviceGatt = (this.activity as MainActivity).bluetoothClass.getConnectedDevice()
-//        displayBluetoothPairedBanner(this.view!!, "${deviceGatt.device.name} (${deviceGatt.device.address}) ${deviceGatt.device.bondState}", getString(R.string.action_message_okay))
-//    }
 }

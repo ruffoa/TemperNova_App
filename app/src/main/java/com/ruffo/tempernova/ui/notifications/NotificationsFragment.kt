@@ -104,7 +104,6 @@ class NotificationsFragment : Fragment() {
 
         adapter.setOnItemClickListener(onItemClickListener)
 
-
         val myHelper = ItemTouchHelper(onItemSwipeListener)
         myHelper.attachToRecyclerView(notifications_list)
     }
@@ -132,13 +131,15 @@ class NotificationsFragment : Fragment() {
 
     private fun clearAllData() {
         val oldSize = locationList.size
-        (activity as MainActivity).locationHelper.clearAllButLatest()
+        (activity as MainActivity).locationHelper.clearAll()
+        (activity as MainActivity).locationHelper.storeLocationList(activity as MainActivity)
         locationList = (activity as MainActivity).locationHelper.getLocationList()
-        adapter.notifyItemRangeRemoved(0, oldSize - locationList.size)
+        adapter.notifyItemRangeRemoved(0, oldSize)
     }
 
     private fun removeNotification(pos: Int) {
         (activity as MainActivity).locationHelper.clearItemAtPosition(pos)
+        (activity as MainActivity).locationHelper.storeLocationList(activity as MainActivity)
         locationList = (activity as MainActivity).locationHelper.getLocationList()
         adapter.notifyItemRemoved(pos)
     }
