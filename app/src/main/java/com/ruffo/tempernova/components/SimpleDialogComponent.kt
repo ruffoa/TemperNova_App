@@ -53,7 +53,7 @@ class SimpleDialogComponent: DialogFragment() {
             // Confirming action
             .setPositiveButton("Confirm") { dialog, which ->
                 // Do something for button click
-                (view.context as MainActivity).bluetoothClass.connectToDevice(view.context, items[checkedItem])
+                (view.context as MainActivity).bluetoothClass.connectToDevice(items[checkedItem])
                 Toast.makeText(view.context, devList[checkedItem], Toast.LENGTH_LONG).show()
                 dialog.dismiss()
             }

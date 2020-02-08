@@ -29,12 +29,11 @@ import com.ruffo.tempernova.helpers.Bluetooth
 import com.ruffo.tempernova.helpers.LocationHelper
 import com.ruffo.tempernova.helpers.RepeatListener
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.ruffo.tempernova.ui.home.HomeFragment
 import com.sergivonavi.materialbanner.Banner
 import com.sergivonavi.materialbanner.BannerInterface
 import java.lang.Error
 
-class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogListener {
+class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListener{
     var temperature: Int = 68
     var currTemp: Int? = null
     var isDisabled: Boolean = false
@@ -47,11 +46,22 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
 
     lateinit var locationHelper: LocationHelper
 
+    var nRefills: Int = 0
+
     private val bannerClass = BannerComponent()
     private lateinit var banner: Banner
 
+    object CoreHelper {
+        var contextGetter: (() -> Context)? = null
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        CoreHelper.contextGetter = {
+            this
+        }
+
         setContentView(R.layout.activity_main)
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
 
@@ -67,6 +77,9 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
         navView.setupWithNavController(navController)
         mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
         temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
+        nRefills = readIntegerSharedPrefs(0 , getString(R.string.refills_preference_key))
+
+        bluetoothClass.createBluetoothManager(this.applicationContext)
         bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
 
         if (!::locationHelper.isInitialized) {
@@ -80,6 +93,7 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
     override fun onPause() {
         super.onPause()
         saveIntPref(temperature, getString(R.string.temperature_preference_key))
+        saveIntPref(nRefills, getString(R.string.refills_preference_key))
 
         if (::locationHelper.isInitialized)
             locationHelper.storeLocationList(this)
@@ -88,6 +102,7 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
     override fun onStop() {
         super.onStop()
         saveIntPref(temperature, getString(R.string.temperature_preference_key))
+        saveIntPref(nRefills, getString(R.string.refills_preference_key))
 
         if (::locationHelper.isInitialized)
             locationHelper.storeLocationList(this)
@@ -125,26 +140,26 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
 
         tempUpButton.setOnClickListener {
             temperature++
-            bluetoothClass.sendDesiredTemp(view.context)
+            bluetoothClass.sendDesiredTemp()
             updateTemp(view)
         }
 
         tempUpButton.setOnTouchListener(RepeatListener(400, 100, {
             temperature++
-            bluetoothClass.sendDesiredTemp(view.context)
+            bluetoothClass.sendDesiredTemp()
             updateTemp(view)
         }))
 
         /** Called when the user touches the "-" button */
         tempDownButton.setOnClickListener {
             temperature--
-            bluetoothClass.sendDesiredTemp(view.context)
+            bluetoothClass.sendDesiredTemp()
             updateTemp(view)
         }
 
         tempDownButton.setOnTouchListener(RepeatListener(400, 100, {
             temperature--
-            bluetoothClass.sendDesiredTemp(view.context)
+            bluetoothClass.sendDesiredTemp()
             updateTemp(view)
         }))
     }
@@ -281,6 +296,12 @@ class MainActivity : AppCompatActivity(), SimpleDialogComponent.SimpleDialogList
             // If we got here, the user's action was not recognized.
             // Invoke the superclass to handle it.
             super.onOptionsItemSelected(item)
+        }
+    }
+
+    fun dismissBanner() {
+        if (::banner.isInitialized) {
+            banner.dismiss()
         }
     }
 

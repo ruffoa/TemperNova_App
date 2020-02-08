@@ -10,6 +10,7 @@
     <string name="longitude_preference_key">savedLongitudePreferenceKey</string>
     <string name="date_preference_key">savedDatePreferenceKey</string>
     <string name="location_list_preference_key">savedLocationListPreferenceKey</string>
+    <string name="refills_preference_key">savedRefillsPreferenceKey</string>
 
     <!--  Bluetooth Banner Messages  -->
     <string name="bluetooth_disconnected">Device Disconnected</string>

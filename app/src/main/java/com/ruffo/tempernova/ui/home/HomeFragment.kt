@@ -76,6 +76,10 @@ class HomeFragment : Fragment() {
                 getString(R.string.bluetooth_off_action)
             )
         } else {
+            if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.CONNECTED) {
+                (activity as MainActivity).changeDisabledState(false)
+            }
+
             if (::banner.isInitialized) {
                 banner.dismiss()
             }
@@ -148,6 +152,11 @@ class HomeFragment : Fragment() {
     fun waitForResult(view: View) {
         if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.CONNECTED) {
             return
+        }
+
+        if ((activity as MainActivity).bluetoothStatus === Bluetooth.BluetoothStates.DISCONNECTED) {
+//            (activity as MainActivity).bluetoothClass.connectToDevice(this.context!!, (activity as MainActivity).bluetoothClass.getConnectedDevice().device)    // Try to reconnect
+            showDevices(view)
         }
 
         if ((activity as MainActivity).bluetoothClass.getDeviceList().isNotEmpty())
