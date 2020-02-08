@@ -35,6 +35,10 @@ class Temperature {
                 avgTemp = pastTemp.sum() / numToAverage
             }
 
+            if (avgTemp < coolThresholdTemp && temp < coolThresholdTemp) {
+                wasCool.set(true)
+            }
+
         }
     }
 
