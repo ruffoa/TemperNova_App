@@ -155,6 +155,14 @@
                                 app:layout_constraintTop_toBottomOf="@+id/homeRefillInfoCardTitle"/>
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
+
+                    <!-- Used for the ripple effect on touch -->
+                    <LinearLayout
+                        android:id="@+id/homeRefillInfoCardHolder"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="?android:selectableItemBackground"
+                        android:orientation="vertical" />
                 </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
         </ScrollView>

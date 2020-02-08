@@ -83,7 +83,6 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
         mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
         temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
         nRefills = readIntegerSharedPrefs(0, getString(R.string.refills_preference_key))
-        nRefills++;
         bluetoothClass.createBluetoothManager(this.applicationContext)
         bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
 
