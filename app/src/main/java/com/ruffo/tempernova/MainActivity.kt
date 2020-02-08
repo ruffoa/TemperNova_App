@@ -15,6 +15,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.DialogFragment
@@ -29,6 +31,8 @@ import com.ruffo.tempernova.helpers.Bluetooth
 import com.ruffo.tempernova.helpers.LocationHelper
 import com.ruffo.tempernova.helpers.RepeatListener
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.card.MaterialCardView
+import com.ruffo.tempernova.helpers.Temperature
 import com.sergivonavi.materialbanner.Banner
 import com.sergivonavi.materialbanner.BannerInterface
 import java.lang.Error
@@ -46,6 +50,7 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
 
     lateinit var locationHelper: LocationHelper
 
+    var temperatureClass: Temperature = Temperature()
     var nRefills: Int = 0
 
     private val bannerClass = BannerComponent()
@@ -77,8 +82,8 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
         navView.setupWithNavController(navController)
         mPrefs = this.getSharedPreferences(getString(R.string.shared_preferences_name), Context.MODE_PRIVATE)
         temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
-        nRefills = readIntegerSharedPrefs(0 , getString(R.string.refills_preference_key))
-
+        nRefills = readIntegerSharedPrefs(0, getString(R.string.refills_preference_key))
+        nRefills++;
         bluetoothClass.createBluetoothManager(this.applicationContext)
         bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
 
@@ -115,6 +120,29 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
             locationHelper.readLocationListFromPref(this)
     }
 
+    fun addRefil() {
+        nRefills++
+    }
+
+    fun updateRefillsCard(view: View) {
+        Log.d("MAINACTIVITY", "NRefills: $nRefills")
+
+        if (nRefills <= 0)
+            return
+
+        val refillsCard: MaterialCardView = view.findViewById(R.id.homeRefillInfoCard)
+        val refillsCardImage: ImageView = view.findViewById(R.id.homeRefillInfoCardImage)
+        val refillsCardTitle: TextView = view.findViewById(R.id.homeRefillInfoCardTitle)
+        val refillsCardText: TextView = view.findViewById(R.id.homeRefillInfoCardText)
+
+        refillsCardImage.setImageDrawable(getDrawable(R.drawable.coffee_background))
+        refillsCardTitle.text = getString(R.string.refill_card_title, nRefills)
+
+        val averageRefills = temperatureClass.getAverageRefills()
+        refillsCardText.text = getString(R.string.refill_card_text, averageRefills)
+        refillsCard.visibility = View.VISIBLE
+        Log.d("MAINACTIVITY", "SHOWING THE REFILLS CARD")
+    }
 
     fun readIntegerSharedPrefs(default: Int, key: String): Int {
         return mPrefs?.getInt(key, default) ?: 0

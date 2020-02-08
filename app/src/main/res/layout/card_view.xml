@@ -51,7 +51,7 @@
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
                     android:textAppearance="?android:attr/textAppearanceListItem"
-                    android:textColor="@android:color/black" />
+                    android:textColor="?android:attr/textColorPrimary" />
 
                 <TextView
                     android:id="@+id/cardText"
@@ -61,7 +61,7 @@
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"
                     android:textAppearance="?android:attr/textAppearanceListItemSecondary"
-                    android:textColor="@android:color/black" />
+                    android:textColor="?android:attr/textColorPrimary" />
             </LinearLayout>
         </RelativeLayout>
     </LinearLayout>
