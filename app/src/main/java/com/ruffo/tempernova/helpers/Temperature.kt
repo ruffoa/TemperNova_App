@@ -117,7 +117,7 @@ class Temperature {
             averageRefills =  temp
             val lastRefills = getTodaysRefills()
 
-//            averageRefills = mutableListOf<RefillData>(RefillData(20, Date(getTimeOFDaysBefore(3))), RefillData(5, Date(getTimeOFDaysBefore(2))), RefillData(60, Date(getTimeOFDaysBefore(1))))
+//            averageRefills = mutableListOf<RefillData>(RefillData(20, Date(getTimeOFDaysBefore(3))), RefillData(5, Date(getTimeOFDaysBefore(2))), RefillData(8, Date(getTimeOFDaysBefore(1))))
 //            averageRefills.add(temp[0])
 
             nRefills = if (lastRefills !== null)
