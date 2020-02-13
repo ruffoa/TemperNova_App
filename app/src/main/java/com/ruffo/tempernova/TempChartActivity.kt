@@ -1,6 +1,7 @@
 package com.ruffo.tempernova
 
 import android.content.Context
+import android.graphics.Color
 import android.graphics.Color.rgb
 import android.os.Bundle
 import android.os.Handler
@@ -117,6 +118,7 @@ class TempChartActivity : AppCompatActivity() {
         set1.setDrawFilled(true)
 //        set1.setFillColor(ContextCompat.getColor(contex,R.color.pale_green));
 //        s.setColor(ContextCompat.getColor(contex,R.color.pale_green));
+        set1.fillColor = Color.GREEN
 
         set1.valueFormatter = TempValueFormatter()
 
