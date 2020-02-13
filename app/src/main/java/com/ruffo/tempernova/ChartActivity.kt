@@ -21,7 +21,6 @@ import kotlinx.android.synthetic.main.activity_chart.*
 import java.text.DateFormat
 import java.text.SimpleDateFormat
 
-
 class ChartActivity : AppCompatActivity() {
 
     private var chart: BarChart? = null
@@ -33,11 +32,8 @@ class ChartActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chart)
         setSupportActionBar(toolbar)
+        title = "Number of Refills"
 
-//        fab.setOnClickListener { view ->
-//            Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                .setAction("Action", null).show()
-//        }
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         val chart: BarChart = findViewById(R.id.refillsChart)

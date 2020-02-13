@@ -27,6 +27,16 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.ruffo.tempernova.MainActivity" />
+        </activity>
+
         <activity
             android:name=".ChartActivity"
             android:label="@string/title_activity_chart"
@@ -36,6 +46,17 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.ruffo.tempernova.MainActivity" />
         </activity>
+
+        <activity
+            android:name=".TempChartActivity"
+            android:label="@string/title_activity_temp_chart"
+            android:parentActivityName=".MainActivity"
+            android:theme="@style/AppTheme.NoActionBar">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.ruffo.tempernova.MainActivity" />
+        </activity>
+
         <!--
              The API key for Google Maps-based APIs is defined as a string resource.
              (See the file "res/values/google_maps_api.xml").
@@ -54,13 +75,6 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.ruffo.tempernova.MapsActivity" />
-        </activity>
-        <activity
-            android:name=".SettingsActivity"
-            android:label="@string/title_activity_settings">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.ruffo.tempernova.SettingsActivity" />
         </activity>
         <activity
             android:name=".MainActivity"

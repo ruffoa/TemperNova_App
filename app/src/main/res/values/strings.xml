@@ -39,4 +39,18 @@
     <string name="refill_card_title">%d Refills Today</string>
     <string name="refill_card_text">You drink %1$.1f mugs per day on average</string>
     <string name="title_activity_chart">ChartActivity</string>
+
+    <!-- Settings preference keys -->
+    <string name="basic_settings_header">Basic Settings</string>
+    <string name="bluetooth_settings_header">Bluetooth Settings</string>
+    <string name="debug_settings_header">Debug Settings</string>
+
+    <!-- Settings names -->
+    <string name="basic_settings_name">Your Name</string>
+    <string name="basic_settings_pref_name">namePreferenceKey</string>
+    <string name="bluetooth_pref_sync">bluetoothPreferenceKey</string>
+    <string name="bluetooth_settings_sync">Bluetooth Sync</string>
+    <string name="debug_settings_temp_graph">Show Temperature Graph</string>
+    <string name="action_temp_graph">Temperature Graph</string>
+    <string name="title_activity_temp_chart">Temperature Chart</string>
 </resources>
