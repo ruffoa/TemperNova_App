@@ -114,6 +114,8 @@ class TempChartActivity : AppCompatActivity() {
         set1.setMode(LineDataSet.Mode.CUBIC_BEZIER);
 
         set1.setLineWidth(2.5f);
+        set1.setDrawCircles(false)
+
 //        set1.setCircleRadius(4.5f);
         set1.setDrawFilled(true)
 //        set1.setFillColor(ContextCompat.getColor(contex,R.color.pale_green));
