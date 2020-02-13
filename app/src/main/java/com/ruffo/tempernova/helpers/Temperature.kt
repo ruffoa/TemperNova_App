@@ -112,13 +112,15 @@ class Temperature {
 
         if (context !== null) {
             val refillsString = context.readStringSharedPrefs("", context.getString(R.string.refills_preference_key))
-            val temp: MutableList<RefillData> = gson.fromJson(refillsString)
 
-            averageRefills =  temp
+            averageRefills = if (refillsString === "") {
+                mutableListOf<RefillData>(RefillData(20, Date(getTimeOFDaysBefore(3))), RefillData(5, Date(getTimeOFDaysBefore(2))), RefillData(8, Date(getTimeOFDaysBefore(1))))
+            } else {
+                val temp: MutableList<RefillData> = gson.fromJson(refillsString)
+                temp
+            }
+
             val lastRefills = getTodaysRefills()
-
-//            averageRefills = mutableListOf<RefillData>(RefillData(20, Date(getTimeOFDaysBefore(3))), RefillData(5, Date(getTimeOFDaysBefore(2))), RefillData(8, Date(getTimeOFDaysBefore(1))))
-//            averageRefills.add(temp[0])
 
             nRefills = if (lastRefills !== null)
                 lastRefills

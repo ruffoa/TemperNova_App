@@ -127,7 +127,7 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
 
         Log.d("MAINACTIVITY", "NRefills: $nRefills")
 
-        if (nRefills <= 0)
+        if (nRefills <= 0 && temperatureClass.getRefills().isEmpty())
             return
 
         val refillsCard: MaterialCardView? = view.findViewById(R.id.homeRefillInfoCard)
@@ -330,6 +330,9 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
 
         R.id.action_about -> {
             // User chose the "About" action, show the about page...
+            val intent = Intent(this, TempChartActivity::class.java).apply {}
+            ActivityCompat.startActivity(this, intent, null)
+
             true
         }
 
