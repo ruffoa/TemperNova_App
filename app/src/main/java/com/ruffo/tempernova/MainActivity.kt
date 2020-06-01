@@ -71,7 +71,9 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
         setContentView(R.layout.activity_main)
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
 
-        val navController = findNavController(R.id.nav_host_fragment)
+        //        val navController = findNavController(R.id.nav_host_fragment) // Deprecated
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
 
         setSupportActionBar(findViewById(R.id.appbar))  // set the appbar (orange thing with fragment name in it) to be the custom one we designed with buttons on it :)
 
