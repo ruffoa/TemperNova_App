@@ -4,30 +4,33 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
-import android.widget.Toast
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.preference.PreferenceFragmentCompat
-import com.google.android.material.button.MaterialButton
 import kotlinx.android.synthetic.main.activity_chart.*
+import java.util.*
 
-class SettingsActivity : AppCompatActivity() {
+
+class AboutActivity : AppCompatActivity() {
 
     companion object {
 
         fun newIntent(context: Context): Intent {
-            val intent = Intent(context, SettingsActivity::class.java)
+            val intent = Intent(context, AboutActivity::class.java)
             return intent
         }
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.settings_activity)
+        setContentView(R.layout.activity_about)
+
         setSupportActionBar(toolbar)
-        title = "Settings"
-        supportFragmentManager
-            .beginTransaction()
-            .replace(R.id.settings, SettingsFragment())
-            .commit()
+        title = "About"
+
+        val string: String = getString(R.string.about_text, Calendar.getInstance().get(Calendar.YEAR))
+        val aboutText: TextView? = findViewById(R.id.about_text_view)
+        aboutText?.text = string
+
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
         supportActionBar?.setHomeButtonEnabled(true);
 
@@ -42,15 +45,6 @@ class SettingsActivity : AppCompatActivity() {
             }
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    class SettingsFragment : PreferenceFragmentCompat() {
-        override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-            setPreferencesFromResource(R.xml.root_preferences, rootKey)
-
-//            val tempGraph = view?.findViewById<MaterialButton>(R.id.)
-        }
-
     }
 
 }

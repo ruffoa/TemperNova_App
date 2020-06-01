@@ -1,5 +1,6 @@
 package com.ruffo.tempernova.helpers
 
+import android.Manifest
 import android.app.Activity
 import android.content.ContentValues
 import android.content.ContentValues.TAG
@@ -58,6 +59,23 @@ class LocationHelper {
     }
 
     fun setFusedLocationProviderListner(activity: Activity) {
+        if (ActivityCompat.checkSelfPermission(
+                ((activity as MainActivity).baseContext.applicationContext),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                ((activity as MainActivity).baseContext.applicationContext),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
         mFusedLocationProviderClient.lastLocation.addOnCompleteListener(activity) { task: Task<Location> ->
             if (task.isSuccessful && task.result != null) {
                 val res: Location? = task.result
@@ -213,6 +231,23 @@ class LocationHelper {
     }
 
     fun addLastKnownLocationToList(activity: Activity) {
+        if (ActivityCompat.checkSelfPermission(
+                ((activity as MainActivity).baseContext.applicationContext),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                ((activity as MainActivity).baseContext.applicationContext),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
         mFusedLocationProviderClient.lastLocation.addOnSuccessListener  {
             val location = it!!
             val latLng = LatLng(location.latitude, location.longitude)

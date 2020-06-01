@@ -12,6 +12,10 @@
     <string name="location_list_preference_key">savedLocationListPreferenceKey</string>
     <string name="refills_preference_key">savedRefillsPreferenceKey</string>
 
+    <!--    Home Page -->
+    <string name="home_temp_minus_button">-</string>
+    <string name="home_temp_plus_button">+</string>
+
     <!--  Bluetooth Banner Messages  -->
     <string name="bluetooth_disconnected">Device Disconnected</string>
     <string name="bluetooth_unavailable">Bluetooth is currently unavailable. Try turning on Bluetooth if your device supports it.</string>
@@ -39,6 +43,7 @@
     <string name="refill_card_title">%d Refills Today</string>
     <string name="refill_card_text">You drink %1$.1f mugs per day on average</string>
     <string name="title_activity_chart">ChartActivity</string>
+    <string name="home_refill_image_description">Cup of Coffee</string>
 
     <!-- Settings preference keys -->
     <string name="basic_settings_header">Basic Settings</string>
@@ -53,4 +58,11 @@
     <string name="debug_settings_temp_graph">Show Temperature Graph</string>
     <string name="action_temp_graph">Temperature Graph</string>
     <string name="title_activity_temp_chart">Temperature Chart</string>
+
+    <!--  About Page -->
+    <string name="about_text">TemperNova App by Alex Ruffo\n\n
+    ELEC 490 Group 26\n
+    Alex Ruffo, Austin Greisman, Stefan Pompilio, Wilson Lai\n\n
+    ©%1$d</string>
+
 </resources>

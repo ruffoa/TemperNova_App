@@ -71,7 +71,9 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
         setContentView(R.layout.activity_main)
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
 
-        val navController = findNavController(R.id.nav_host_fragment)
+        //        val navController = findNavController(R.id.nav_host_fragment) // Deprecated
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
 
         setSupportActionBar(findViewById(R.id.appbar))  // set the appbar (orange thing with fragment name in it) to be the custom one we designed with buttons on it :)
 
@@ -319,6 +321,15 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+        R.id.action_about -> {
+            // User chose the "About" item, show the app about page...
+
+            val intent = AboutActivity.newIntent(this)
+            ActivityCompat.startActivity(this, intent, null)
+
+            true
+        }
+
         R.id.action_settings -> {
             // User chose the "Settings" item, show the app settings UI...
 
@@ -328,8 +339,8 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
             true
         }
 
-        R.id.action_about -> {
-            // User chose the "About" action, show the about page...
+        R.id.action_temperature -> {
+            // User chose the "Temperature Graph" action, show the Temperature page...
             val intent = Intent(this, TempChartActivity::class.java).apply {}
             ActivityCompat.startActivity(this, intent, null)
 

@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.util.TypedValue
+import android.view.MenuItem
 import androidx.annotation.AttrRes
 import androidx.appcompat.app.AppCompatActivity
 import com.github.mikephil.charting.charts.LineChart
@@ -28,6 +29,7 @@ class TempChartActivity : AppCompatActivity() {
         title = "Temperature"
 
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setHomeButtonEnabled(true);
 
         val chart: LineChart = findViewById(R.id.tempChart)
 
@@ -38,6 +40,18 @@ class TempChartActivity : AppCompatActivity() {
 
         setupChart(chart, data, colors[0])
         Handler().postDelayed({ getNewDataPoint(chart) }, 1000)    // wait for the next data point...
+
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        val id: Int = item.getItemId()
+        when (id) {
+            android.R.id.home -> {
+                onBackPressed()
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     private val colors = arrayOf(
