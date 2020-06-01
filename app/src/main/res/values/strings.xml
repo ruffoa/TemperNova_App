@@ -53,4 +53,11 @@
     <string name="debug_settings_temp_graph">Show Temperature Graph</string>
     <string name="action_temp_graph">Temperature Graph</string>
     <string name="title_activity_temp_chart">Temperature Chart</string>
+
+    <!--  About Page -->
+    <string name="about_text">TemperNova App by Alex Ruffo\n\n
+    ELEC 490 Group 26\n
+    Alex Ruffo, Austin Greisman, Stefan Pompilio, Wilson Lai\n\n
+    ©%1$d</string>
+
 </resources>
