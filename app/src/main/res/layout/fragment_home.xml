@@ -76,12 +76,12 @@
                                 android:layout_gravity="center"
                                 android:layout_marginLeft="40dp"
                                 android:layout_marginRight="40dp"
-                                android:layout_weight="1"
                                 android:backgroundTint="@color/design_default_color_primary_dark"
                                 android:padding="8dp"
-                                android:text="-"
+                                android:text="@string/home_temp_minus_button"
                                 android:textColor="@android:color/white"
-                                android:textSize="36dp" />
+                                android:textSize="36dp"
+                                android:minWidth="120dp"/>
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/tempUpButton"
@@ -90,12 +90,12 @@
                                 android:layout_gravity="center"
                                 android:layout_marginLeft="40dp"
                                 android:layout_marginRight="40dp"
-                                android:layout_weight="1"
                                 android:backgroundTint="@color/colorPrimaryDark"
                                 android:padding="8dp"
-                                android:text="+"
+                                android:text="@string/home_temp_plus_button"
                                 android:textColor="@android:color/white"
-                                android:textSize="36dp" />
+                                android:textSize="36dp"
+                                android:minWidth="120dp" />
                         </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -126,7 +126,8 @@
                             android:adjustViewBounds="true"
                             android:layout_gravity="center"
                             android:scaleType="centerInside"
-                            android:cropToPadding="true" />
+                            android:cropToPadding="true"
+                            android:contentDescription="@string/home_refill_image_description" />
 
 
                             <TextView
@@ -135,7 +136,6 @@
                                 android:layout_height="wrap_content"
                                 android:paddingBottom="4dp"
                                 android:layout_marginStart="16dp"
-                                android:layout_marginLeft="16dp"
                                 android:layout_marginTop="16dp"
                                 android:textColor="?android:attr/textColorPrimary"
                                 android:textAppearance="?android:attr/textAppearanceListItem"
@@ -148,7 +148,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
-                                android:layout_marginLeft="16dp"
+                                android:layout_marginStart="16dp"
                                 android:layout_marginBottom="8dp"
                                 android:textAppearance="?android:attr/textAppearanceListItemSecondary"
                                 app:layout_constraintStart_toStartOf="@+id/homeRefillInfoCardTitle"
