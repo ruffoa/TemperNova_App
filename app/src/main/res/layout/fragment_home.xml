@@ -7,9 +7,14 @@
     android:tag="HomeFragment">
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:id="@+id/linearLayout2"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <FrameLayout
             android:id="@+id/home_root_linear_layout"
@@ -77,11 +82,11 @@
                                 android:layout_marginLeft="40dp"
                                 android:layout_marginRight="40dp"
                                 android:backgroundTint="@color/design_default_color_primary_dark"
+                                android:minWidth="120dp"
                                 android:padding="8dp"
                                 android:text="@string/home_temp_minus_button"
                                 android:textColor="@android:color/white"
-                                android:textSize="36dp"
-                                android:minWidth="120dp"/>
+                                android:textSize="36dp" />
 
                             <com.google.android.material.button.MaterialButton
                                 android:id="@+id/tempUpButton"
@@ -91,11 +96,11 @@
                                 android:layout_marginLeft="40dp"
                                 android:layout_marginRight="40dp"
                                 android:backgroundTint="@color/colorPrimaryDark"
+                                android:minWidth="120dp"
                                 android:padding="8dp"
                                 android:text="@string/home_temp_plus_button"
                                 android:textColor="@android:color/white"
-                                android:textSize="36dp"
-                                android:minWidth="120dp" />
+                                android:textSize="36dp" />
                         </LinearLayout>
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
@@ -106,11 +111,11 @@
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="@dimen/mtrl_card_spacing"
                     android:layout_marginTop="@dimen/mtrl_card_spacing"
-                    android:layout_marginBottom="@dimen/mtrl_card_spacing"
                     android:layout_marginRight="@dimen/mtrl_card_spacing"
+                    android:layout_marginBottom="@dimen/mtrl_card_spacing"
+                    android:visibility="gone"
                     card_view:cardCornerRadius="@dimen/cardview_default_radius"
-                    card_view:cardElevation="@dimen/cardview_default_elevation"
-                    android:visibility="gone">
+                    card_view:cardElevation="@dimen/cardview_default_elevation">
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"
@@ -121,38 +126,38 @@
                             android:id="@+id/homeRefillInfoCardImage"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            app:layout_constraintStart_toStartOf="parent"
-                            app:layout_constraintTop_toTopOf="parent"
-                            android:adjustViewBounds="true"
                             android:layout_gravity="center"
-                            android:scaleType="centerInside"
+                            android:adjustViewBounds="true"
+                            android:contentDescription="@string/home_refill_image_description"
                             android:cropToPadding="true"
-                            android:contentDescription="@string/home_refill_image_description" />
+                            android:scaleType="centerInside"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toTopOf="parent" />
 
 
-                            <TextView
-                                android:id="@+id/homeRefillInfoCardTitle"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:paddingBottom="4dp"
-                                android:layout_marginStart="16dp"
-                                android:layout_marginTop="16dp"
-                                android:textColor="?android:attr/textColorPrimary"
-                                android:textAppearance="?android:attr/textAppearanceListItem"
-                                app:layout_constraintStart_toStartOf="parent"
-                                app:layout_constraintTop_toBottomOf="@+id/homeRefillInfoCardImage" />
+                        <TextView
+                            android:id="@+id/homeRefillInfoCardTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginTop="16dp"
+                            android:paddingBottom="4dp"
+                            android:textAppearance="?android:attr/textAppearanceListItem"
+                            android:textColor="?android:attr/textColorPrimary"
+                            app:layout_constraintStart_toStartOf="parent"
+                            app:layout_constraintTop_toBottomOf="@+id/homeRefillInfoCardImage" />
 
 
-                            <TextView
-                                android:id="@+id/homeRefillInfoCardText"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:layout_marginStart="16dp"
-                                android:layout_marginBottom="8dp"
-                                android:textAppearance="?android:attr/textAppearanceListItemSecondary"
-                                app:layout_constraintStart_toStartOf="@+id/homeRefillInfoCardTitle"
-                                app:layout_constraintTop_toBottomOf="@+id/homeRefillInfoCardTitle"/>
+                        <TextView
+                            android:id="@+id/homeRefillInfoCardText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="16dp"
+                            android:layout_marginTop="8dp"
+                            android:layout_marginBottom="8dp"
+                            android:textAppearance="?android:attr/textAppearanceListItemSecondary"
+                            app:layout_constraintStart_toStartOf="@+id/homeRefillInfoCardTitle"
+                            app:layout_constraintTop_toBottomOf="@+id/homeRefillInfoCardTitle" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
