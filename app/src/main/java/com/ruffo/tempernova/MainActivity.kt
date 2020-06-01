@@ -321,6 +321,15 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
     }
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
+        R.id.action_about -> {
+            // User chose the "About" item, show the app about page...
+
+            val intent = AboutActivity.newIntent(this)
+            ActivityCompat.startActivity(this, intent, null)
+
+            true
+        }
+
         R.id.action_settings -> {
             // User chose the "Settings" item, show the app settings UI...
 
@@ -330,8 +339,8 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
             true
         }
 
-        R.id.action_about -> {
-            // User chose the "About" action, show the about page...
+        R.id.action_temperature -> {
+            // User chose the "Temperature Graph" action, show the Temperature page...
             val intent = Intent(this, TempChartActivity::class.java).apply {}
             ActivityCompat.startActivity(this, intent, null)
 

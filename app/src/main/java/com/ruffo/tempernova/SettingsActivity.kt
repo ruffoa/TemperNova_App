@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceFragmentCompat
 import com.google.android.material.button.MaterialButton
+import kotlinx.android.synthetic.main.activity_chart.*
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -21,6 +22,8 @@ class SettingsActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.settings_activity)
+        setSupportActionBar(toolbar)
+        title = "Settings"
         supportFragmentManager
             .beginTransaction()
             .replace(R.id.settings, SettingsFragment())
