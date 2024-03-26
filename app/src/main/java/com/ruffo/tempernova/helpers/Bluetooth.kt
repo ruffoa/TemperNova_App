@@ -1,5 +1,6 @@
 package com.ruffo.tempernova.helpers
 
+import android.Manifest
 import android.app.Activity
 import android.bluetooth.*
 import android.bluetooth.BluetoothDevice.*
@@ -13,9 +14,12 @@ import android.bluetooth.le.ScanSettings
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.core.app.ActivityCompat
 import androidx.core.app.ActivityCompat.startActivityForResult
 import com.ruffo.tempernova.MainActivity
 import com.ruffo.tempernova.R
@@ -73,11 +77,15 @@ class Bluetooth {
         bluetoothManager = context.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     }
 
-    fun checkBluetooth(context: Context): BluetoothStates {
+    fun checkBluetooth(context: Context, activity: Activity): BluetoothStates {
         if (bluetoothAdapter == null) {
             // Device doesn't support Bluetooth
             println("Bluetooth is not detected!")
             return BluetoothStates.UNAVAILABLE
+        }
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S) {
+            validateBluetoothPermissions(activity)
         }
 
         if (!bluetoothAdapter.isEnabled) {
@@ -109,6 +117,34 @@ class Bluetooth {
         }
 
         return BluetoothStates.ON
+    }
+
+    @RequiresApi(Build.VERSION_CODES.S)
+    fun validateBluetoothPermissions(activity: Activity) {
+        println("Checking permissions...")
+
+        if (ActivityCompat.checkSelfPermission(
+                ((activity as MainActivity).baseContext.applicationContext),
+                Manifest.permission.BLUETOOTH_SCAN
+            ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
+                ((activity as MainActivity).baseContext.applicationContext),
+                Manifest.permission.BLUETOOTH_ADMIN
+            ) != PackageManager.PERMISSION_GRANTED || ActivityCompat.checkSelfPermission(
+                ((activity as MainActivity).baseContext.applicationContext),
+                Manifest.permission.BLUETOOTH_CONNECT
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(activity,
+                arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_SCAN, Manifest.permission.BLUETOOTH_ADMIN), 1)
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return
+        }
     }
 
     fun enableBluetooth(activity: Activity) {
@@ -661,12 +697,17 @@ class Bluetooth {
 
     private val scanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
+            if (result.device == null) {
+                return;
+            }
+
             val device = result.device
             Log.d("BLUETOOTH", "Device found: " + device.name + ", " + device.type + ", " + device.address)
 
             if (!deviceList.contains(device) && device.name !== null) { // do we want to only show devices with a name?
                 deviceList.add(device)
             }
+
             // ...do whatever you want with this found device
         }
 

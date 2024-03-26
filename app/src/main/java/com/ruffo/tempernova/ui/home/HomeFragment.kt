@@ -238,7 +238,7 @@ class HomeFragment : Fragment() {
             println("RESULT OK!")
 
             (activity as MainActivity).bluetoothStatus = Bluetooth.BluetoothStates.ON
-            checkBluetooth(this.view!!)
+            checkBluetooth(this.requireView())
         }
 
         if (resultCode === Activity.RESULT_OK && requestCode === resources.getInteger(R.integer.bluetooth_choose_device_code)) {

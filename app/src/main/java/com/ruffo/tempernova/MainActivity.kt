@@ -87,7 +87,7 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
         temperature = readIntegerSharedPrefs(resources.getInteger(R.integer.default_celcius_temperature), getString(R.string.temperature_preference_key))
         temperatureClass.updateRefillsFromPrefs()
         bluetoothClass.createBluetoothManager(this.applicationContext)
-        bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
+        bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext, this)
 
         if (!::locationHelper.isInitialized) {
             locationHelper = LocationHelper()
@@ -297,7 +297,7 @@ class MainActivity: AppCompatActivity(), SimpleDialogComponent.SimpleDialogListe
     }
 
     fun checkAndUpdateBluetoothStatus() {
-        bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext)
+        bluetoothStatus = bluetoothClass.checkBluetooth(this.applicationContext, this)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
